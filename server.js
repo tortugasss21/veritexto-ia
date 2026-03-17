@@ -259,7 +259,7 @@ app.post('/api/feedback/:id', async (req, res) => {
   }
 });
 
-// ESTATÍSTICAS
+// ESTATÍSTICAS - VERSÃO MELHORADA (sem métrica enganosa)
 app.get('/api/estatisticas', async (req, res) => {
   try {
     const totalAnalises = await Analise.countDocuments();
@@ -273,29 +273,9 @@ app.get('/api/estatisticas', async (req, res) => {
       }
     ]);
 
-    const analisesComFeedback = await Analise.countDocuments({
-      'feedback.avaliacaoCorreta': { $exists: true }
-    });
-
-    const feedbackCorretos = await Analise.countDocuments({
-      'feedback.avaliacaoCorreta': true
-    });
-
-    const taxaAcerto = analisesComFeedback > 0
-      ? ((feedbackCorretos / analisesComFeedback) * 100).toFixed(2)
-      : 0;
-
-    const ultimas = await Analise.find()
-      .sort({ dataAnalise: -1 })
-      .limit(20);
-
     res.json({
       totalAnalises,
-      analisesComFeedback,
-      feedbackCorretos,
-      taxaAcerto: parseFloat(taxaAcerto),
-      porRisco: analisesPorRisco,
-      ultimas
+      porRisco: analisesPorRisco
     });
 
   } catch (error) {
