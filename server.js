@@ -8,16 +8,15 @@ dotenv.config();
 
 const app = express();
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Conectar ao MongoDB
+// MongoDB
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ MongoDB conectado!'))
   .catch((err) => console.log('❌ Erro MongoDB:', err));
 
-// Schema de Análise
+// Schema
 const analiseSchema = new mongoose.Schema({
   texto: String,
   risco: String,
@@ -25,24 +24,18 @@ const analiseSchema = new mongoose.Schema({
   sinais: [String],
   explicacao: String,
   recomendacao: String,
-  dataAnalise: { type: Date, default: Date.now },
-  feedback: {
-    avaliacaoCorreta: Boolean,
-    observacoes: String,
-    dataFeedback: Date
-  }
+  dataAnalise: { type: Date, default: Date.now }
 });
 
 const Analise = mongoose.model('Analise', analiseSchema);
 
-// Inicializar cliente OpenAI
+// OpenRouter (usa SDK da OpenAI)
 const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENROUTER_API_KEY,
+  baseURL: 'https://openrouter.ai/api/v1'
 });
 
-// ============ ROTAS ============
-
-// 1. Analisar texto
+// ================== ANALISAR ==================
 app.post('/api/analisar', async (req, res) => {
   try {
     const { texto } = req.body;
@@ -55,52 +48,42 @@ app.post('/api/analisar', async (req, res) => {
 
     console.log('📝 Analisando texto...');
 
-    const prompt = `
-Você é um especialista em análise de desinformação.
-Analise o texto e identifique possíveis sinais de fake news.
+    const completion = await client.chat.completions.create({
+      model: 'openrouter/free',
+      messages: [
+        {
+          role: 'system',
+          content: 'Você é um especialista em fake news. Responda apenas em JSON válido.'
+        },
+        {
+          role: 'user',
+          content: `Analise este texto:
 
-Responda APENAS em JSON válido, sem markdown, sem crases e sem texto extra.
-Use exatamente este formato:
-{
-  "risco": "baixo|médio|alto",
-  "percentualRisco": número entre 0 e 100,
-  "sinais": ["sinal1", "sinal2"],
-  "explicacao": "explicação clara",
-  "recomendacao": "recomendação"
-}
-
-Considere:
-- títulos sensacionalistas
-- falta de fontes
-- linguagem emocional
-- afirmações absolutas
-- pedidos para compartilhar
-- erros gramaticais
-
-Texto:
 "${texto}"
-`;
 
-    const response = await client.responses.create({
-      model: 'gpt-4.1-mini',
-      input: prompt
+Responda exatamente neste formato JSON:
+{
+  "risco": "baixo|medio|alto",
+  "percentualRisco": 0-100,
+  "sinais": ["..."],
+  "explicacao": "...",
+  "recomendacao": "..."
+}`
+        }
+      ]
     });
 
-    const textoResposta = response.output_text || '';
-    console.log('📥 Resposta bruta da IA:', textoResposta);
+    const resposta = completion.choices[0].message.content;
+    console.log('📥 IA respondeu:', resposta);
 
     let resultado;
 
     try {
-      resultado = JSON.parse(textoResposta);
-    } catch (e) {
-      const jsonMatch = textoResposta.match(/\{[\s\S]*\}/);
-
-      if (!jsonMatch) {
-        throw new Error('A IA não retornou JSON válido.');
-      }
-
-      resultado = JSON.parse(jsonMatch[0]);
+      resultado = JSON.parse(resposta);
+    } catch {
+      const match = resposta.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('Resposta inválida da IA');
+      resultado = JSON.parse(match[0]);
     }
 
     const analise = new Analise({
@@ -113,7 +96,6 @@ Texto:
     });
 
     await analise.save();
-    console.log('✅ Análise salva!');
 
     res.json({
       sucesso: true,
@@ -122,135 +104,28 @@ Texto:
     });
 
   } catch (error) {
-    console.error('❌ Erro ao analisar:');
-    console.error('status:', error?.status);
-    console.error('message:', error?.message);
-    console.error('type:', error?.type);
-    console.error('full error:', error);
+    console.error('❌ Erro:', error);
 
     res.status(500).json({
-      erro: error?.message || 'Erro ao analisar texto.'
+      erro: error.message || 'Erro ao analisar'
     });
   }
 });
 
-// 2. Enviar feedback
-app.post('/api/feedback/:id', async (req, res) => {
-  try {
-    const { avaliacaoCorreta, observacoes } = req.body;
-    const { id } = req.params;
-
-    const analise = await Analise.findByIdAndUpdate(
-      id,
-      {
-        feedback: {
-          avaliacaoCorreta,
-          observacoes,
-          dataFeedback: new Date()
-        }
-      },
-      { new: true }
-    );
-
-    if (!analise) {
-      return res.status(404).json({ erro: 'Análise não encontrada.' });
-    }
-
-    console.log('✅ Feedback salvo!');
-    res.json({ sucesso: true, analise });
-
-  } catch (error) {
-    console.error('❌ Erro ao salvar feedback:', error);
-    res.status(500).json({ erro: 'Erro ao salvar feedback.' });
-  }
+// ================== TESTE ==================
+app.get('/api/teste', (req, res) => {
+  res.json({ ok: true });
 });
 
-// 3. Obter estatísticas
-app.get('/api/estatisticas', async (req, res) => {
-  try {
-    const totalAnalises = await Analise.countDocuments();
-
-    const analisesPorRisco = await Analise.aggregate([
-      {
-        $group: {
-          _id: '$risco',
-          quantidade: { $sum: 1 }
-        }
-      }
-    ]);
-
-    const analisesComFeedback = await Analise.countDocuments({
-      'feedback.avaliacaoCorreta': { $exists: true }
-    });
-
-    const feedbackCorretos = await Analise.countDocuments({
-      'feedback.avaliacaoCorreta': true
-    });
-
-    const taxaAcerto = analisesComFeedback > 0
-      ? ((feedbackCorretos / analisesComFeedback) * 100).toFixed(2)
-      : 0;
-
-    const analises = await Analise.find()
-      .sort({ dataAnalise: -1 })
-      .limit(100);
-
-    res.json({
-      totalAnalises,
-      analisesComFeedback,
-      feedbackCorretos,
-      taxaAcerto: parseFloat(taxaAcerto),
-      porRisco: analisesPorRisco,
-      ultimas: analises
-    });
-
-  } catch (error) {
-    console.error('❌ Erro ao obter estatísticas:', error);
-    res.status(500).json({ erro: 'Erro ao obter estatísticas.' });
-  }
-});
-
-// 4. Obter análise específica
-app.get('/api/analise/:id', async (req, res) => {
-  try {
-    const analise = await Analise.findById(req.params.id);
-
-    if (!analise) {
-      return res.status(404).json({ erro: 'Análise não encontrada.' });
-    }
-
-    res.json(analise);
-
-  } catch (error) {
-    console.error('❌ Erro ao obter análise:', error);
-    res.status(500).json({ erro: 'Erro ao obter análise.' });
-  }
-});
-
-// 5. Listar todas as análises
-app.get('/api/analises', async (req, res) => {
-  try {
-    const analises = await Analise.find()
-      .sort({ dataAnalise: -1 });
-
-    res.json(analises);
-
-  } catch (error) {
-    console.error('❌ Erro ao listar análises:', error);
-    res.status(500).json({ erro: 'Erro ao listar análises.' });
-  }
-});
-
-// Servir arquivos estáticos
+// ================== SERVER ==================
 app.use(express.static('public'));
 
-// Rota raiz
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
-// Iniciar servidor
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+  console.log(`🚀 Rodando em http://localhost:${PORT}`);
 });
