@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const Anthropic = require('@anthropic-ai/sdk');
+const OpenAI = require('openai');
 
 dotenv.config();
 
@@ -35,9 +35,9 @@ const analiseSchema = new mongoose.Schema({
 
 const Analise = mongoose.model('Analise', analiseSchema);
 
-// Inicializar cliente Anthropic
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY
+// Inicializar cliente OpenAI
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 // ============ ROTAS ============
@@ -55,32 +55,38 @@ app.post('/api/analisar', async (req, res) => {
 
     console.log('📝 Analisando texto...');
 
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1000,
-      messages: [
-        {
-          role: 'user',
-          content: `Você é um especialista em análise de desinformação. Analise o texto e identifique possíveis sinais de fake news.
+    const prompt = `
+Você é um especialista em análise de desinformação.
+Analise o texto e identifique possíveis sinais de fake news.
 
-Responda APENAS em JSON válido, sem nenhum texto adicional:
+Responda APENAS em JSON válido, sem markdown, sem crases e sem texto extra.
+Use exatamente este formato:
 {
   "risco": "baixo|médio|alto",
   "percentualRisco": número entre 0 e 100,
-  "sinais": ["sinal1", "sinal2", ...],
+  "sinais": ["sinal1", "sinal2"],
   "explicacao": "explicação clara",
   "recomendacao": "recomendação"
 }
 
-Considere: títulos sensacionalistas, falta de fontes, linguagem emocional, afirmações absolutas, pedidos para compartilhar, erros gramaticais.
+Considere:
+- títulos sensacionalistas
+- falta de fontes
+- linguagem emocional
+- afirmações absolutas
+- pedidos para compartilhar
+- erros gramaticais
 
 Texto:
-"${texto}"`
-        }
-      ]
+"${texto}"
+`;
+
+    const response = await client.responses.create({
+      model: 'gpt-4.1-mini',
+      input: prompt
     });
 
-    const textoResposta = message?.content?.[0]?.text || '';
+    const textoResposta = response.output_text || '';
     console.log('📥 Resposta bruta da IA:', textoResposta);
 
     let resultado;
