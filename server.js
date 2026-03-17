@@ -13,12 +13,9 @@ app.use(cors());
 app.use(express.json());
 
 // Conectar ao MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('✅ MongoDB conectado!'))
-.catch((err) => console.log('❌ Erro MongoDB:', err));
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('✅ MongoDB conectado!'))
+  .catch((err) => console.log('❌ Erro MongoDB:', err));
 
 // Schema de Análise
 const analiseSchema = new mongoose.Schema({
@@ -51,8 +48,8 @@ app.post('/api/analisar', async (req, res) => {
     const { texto } = req.body;
 
     if (!texto || texto.trim().length < 20) {
-      return res.status(400).json({ 
-        erro: 'O texto deve ter pelo menos 20 caracteres.' 
+      return res.status(400).json({
+        erro: 'O texto deve ter pelo menos 20 caracteres.'
       });
     }
 
@@ -83,12 +80,20 @@ Texto:
       ]
     });
 
+    const textoResposta = message?.content?.[0]?.text || '';
+    console.log('📥 Resposta bruta da IA:', textoResposta);
+
     let resultado;
+
     try {
-      const texto_resposta = message.content[0].text;
-      resultado = JSON.parse(texto_resposta);
+      resultado = JSON.parse(textoResposta);
     } catch (e) {
-      const jsonMatch = message.content[0].text.match(/\{[\s\S]*\}/);
+      const jsonMatch = textoResposta.match(/\{[\s\S]*\}/);
+
+      if (!jsonMatch) {
+        throw new Error('A IA não retornou JSON válido.');
+      }
+
       resultado = JSON.parse(jsonMatch[0]);
     }
 
@@ -111,9 +116,14 @@ Texto:
     });
 
   } catch (error) {
-    console.error('❌ Erro ao analisar:', error);
-    res.status(500).json({ 
-      erro: 'Erro ao analisar texto. Verifique sua chave API.' 
+    console.error('❌ Erro ao analisar:');
+    console.error('status:', error?.status);
+    console.error('message:', error?.message);
+    console.error('type:', error?.type);
+    console.error('full error:', error);
+
+    res.status(500).json({
+      erro: error?.message || 'Erro ao analisar texto.'
     });
   }
 });
@@ -153,7 +163,7 @@ app.post('/api/feedback/:id', async (req, res) => {
 app.get('/api/estatisticas', async (req, res) => {
   try {
     const totalAnalises = await Analise.countDocuments();
-    
+
     const analisesPorRisco = await Analise.aggregate([
       {
         $group: {
@@ -171,7 +181,7 @@ app.get('/api/estatisticas', async (req, res) => {
       'feedback.avaliacaoCorreta': true
     });
 
-    const taxaAcerto = analisesComFeedback > 0 
+    const taxaAcerto = analisesComFeedback > 0
       ? ((feedbackCorretos / analisesComFeedback) * 100).toFixed(2)
       : 0;
 
@@ -198,7 +208,7 @@ app.get('/api/estatisticas', async (req, res) => {
 app.get('/api/analise/:id', async (req, res) => {
   try {
     const analise = await Analise.findById(req.params.id);
-    
+
     if (!analise) {
       return res.status(404).json({ erro: 'Análise não encontrada.' });
     }
