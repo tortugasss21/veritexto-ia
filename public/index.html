@@ -27,14 +27,14 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f4f6f8;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef4ff 100%);
             color: var(--text);
             min-height: 100vh;
             transition: background 0.3s ease, color 0.3s ease;
         }
 
         .container {
-            max-width: 760px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             min-height: 100vh;
@@ -45,6 +45,18 @@
         .header {
             text-align: center;
             margin-bottom: 40px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .logo {
@@ -58,21 +70,24 @@
         .logo-icon {
             width: 48px;
             height: 48px;
-            background: var(--primary);
-            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary) 0%, #0052cc 100%);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 15px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
         }
 
         h1 {
             font-size: 2.5em;
             margin-bottom: 8px;
-            color: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, #0052cc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .subtitle {
@@ -120,10 +135,11 @@
 
         .card {
             background: white;
-            border-radius: 8px;
+            border-radius: 16px;
             padding: 30px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             margin-bottom: 20px;
+            transition: all 0.3s ease;
         }
 
         .form-group {
@@ -177,15 +193,17 @@
         }
 
         .btn-primary {
-            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
             flex: 1;
             justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
             min-width: 220px;
         }
 
         .btn-primary:hover {
-            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
         }
 
         .btn-primary:disabled {
@@ -241,15 +259,15 @@
         }
 
         .risk-low {
-            background: var(--success);
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
         }
 
         .risk-medium {
-            background: var(--warning);
+            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
         }
 
         .risk-high {
-            background: var(--danger);
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
         }
 
         .risk-percentage {
@@ -270,11 +288,9 @@
 
         .signal-item {
             margin: 8px 0;
-            padding: 12px 14px;
+            padding: 12px;
             background: var(--light);
             border-radius: 8px;
-            border-left: 3px solid var(--warning);
-            font-size: 0.95em;
         }
 
         .info-box {
@@ -337,77 +353,48 @@
             display: block;
         }
 
-
-        .stats-total {
-            background: var(--light);
-            padding: 20px;
+        .success-message {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 16px;
             border-radius: 8px;
-            text-align: center;
+            border-left: 4px solid var(--success);
             margin-bottom: 20px;
+            display: none;
         }
 
-        .stats-total-number {
-            font-size: 2.5em;
+        .success-message.show {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            padding: 20px;
+            background: var(--light);
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2em;
             font-weight: bold;
             color: var(--primary);
         }
 
-        .stats-total-label {
-            font-size: 1.1em;
+        .stat-label {
             color: var(--text-light);
             margin-top: 8px;
-        }
-
-        .stats-risco-item {
-            margin: 16px 0;
-            padding: 16px;
-            background: var(--light);
-            border-radius: 8px;
-        }
-
-        .stats-risco-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .stats-risco-badge {
-            color: white;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            font-weight: bold;
-        }
-
-        .stats-risco-badge.baixo { background: var(--success); }
-        .stats-risco-badge.medio { background: var(--warning); }
-        .stats-risco-badge.alto  { background: var(--danger); }
-
-        .stats-bar-track {
-            background: #e0e0e0;
-            border-radius: 4px;
-            height: 10px;
-            overflow: hidden;
-        }
-
-        .stats-bar-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.4s ease;
-        }
-
-        .stats-bar-fill.baixo { background: var(--success); }
-        .stats-bar-fill.medio { background: var(--warning); }
-        .stats-bar-fill.alto  { background: var(--danger); }
-
-        .stats-h3 {
-            margin-bottom: 16px;
-            font-size: 1em;
-            font-weight: 600;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
         }
 
         .examples-box {
@@ -431,7 +418,7 @@
 
         /* DARK MODE */
         body.dark-mode {
-            background: #1a1a2e;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d3d 100%);
             color: #e0e0e0;
         }
 
@@ -511,29 +498,34 @@
             color: #a0a0b0;
         }
 
+        /* Botão Dark Mode */
         .dark-mode-toggle {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            width: 44px;
-            height: 44px;
-            border-radius: 8px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
             background: var(--primary);
             border: none;
             color: white;
-            font-size: 0.75em;
-            font-weight: 700;
+            font-size: 1.5em;
             cursor: pointer;
-            transition: background 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
+            transition: all 0.3s ease;
             z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: center;
-            letter-spacing: 0.5px;
+        }
+
+        .dark-mode-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
         }
 
         body.dark-mode .dark-mode-toggle {
-            background: #4a4a5e;
+            background: #fbbf24;
         }
 
         @media (max-width: 768px) {
@@ -570,21 +562,22 @@
     <div class="container">
         <div class="header">
             <div class="logo">
-                <div class="logo-icon">VT</div>
+                <div class="logo-icon">🔍</div>
                 <h1>VeriTexto</h1>
             </div>
             <p class="subtitle">Detector de Possíveis Sinais de Desinformação</p>
         </div>
 
         <div class="tabs">
-            <button class="tab-button active" onclick="mudarAba('analise', this)">Análise</button>
-            <button class="tab-button" onclick="mudarAba('estatisticas', this)">Estatísticas</button>
+            <button class="tab-button active" onclick="mudarAba('analise', this)">📝 Análise</button>
+            <button class="tab-button" onclick="mudarAba('estatisticas', this)">📈 Estatísticas</button>
         </div>
 
         <div id="analise" class="tab-content active">
             <div class="card">
-                <div class="disclaimer-box" id="disclaimerBox">
-                    <strong>Atenção:</strong> Este sistema detecta <strong>sinais de possível desinformação</strong>, não a verdade absoluta.
+                <div class="disclaimer-box">
+                    <strong>⚠️ IMPORTANTE:</strong><br>
+                    Este sistema detecta <strong>sinais de possível desinformação</strong>, não a verdade absoluta.
                     <br><br>
                     Sempre consulte sites confiáveis para garantir a veracidade das informações. 
                 </div>
@@ -599,19 +592,20 @@
                         <span id="btnText">Analisar texto</span>
                         <span id="spinner" style="display: none;" class="loading-spinner"></span>
                     </button>
-                    <button class="btn-secondary" id="btnLimpar" onclick="limparFormulario()" disabled>Limpar</button>
+                    <button class="btn-secondary" onclick="limparFormulario()">Limpar</button>
                 </div>
 
                 <div class="examples-box" id="examplesBox">
-                    <div class="examples-title">Exemplos para testar:</div>
+                    <div class="examples-title">📋 Exemplos para testar:</div>
                     <div class="examples-buttons">
-                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_alto')">Risco Alto</button>
-                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_medio')">Risco Médio</button>
-                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_baixo')">Risco Baixo</button>
+                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_alto')">Risco Alto 🔴</button>
+                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_medio')">Risco Médio 🟡</button>
+                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_baixo')">Risco Baixo 🟢</button>
                     </div>
                 </div>
 
                 <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
 
                 <div id="resultados" style="display: none; margin-top: 30px;">
                     <div class="result-header">
@@ -626,17 +620,17 @@
                     </div>
 
                     <div style="margin-top: 24px;">
-                        <h3 class="section-title">Sinais Identificados</h3>
+                        <h3 class="section-title">🚨 Sinais Identificados</h3>
                         <div id="signalsContainer"></div>
                     </div>
 
                     <div class="info-box">
-                        <h4>Análise Detalhada</h4>
+                        <h4>📝 Análise Detalhada</h4>
                         <p id="explanation"></p>
                     </div>
 
                     <div class="info-box">
-                        <h4>Recomendação</h4>
+                        <h4>✅ Recomendação</h4>
                         <p id="recommendation"></p>
                     </div>
                 </div>
@@ -653,7 +647,7 @@
         </div>
     </div>
 
-    <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Alternar modo escuro" id="darkBtn">DARK</button>
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Alternar modo escuro">🌙</button>
 
     <script>
         const API_URL = window.location.origin + '/api';
@@ -713,16 +707,10 @@
         }
 
         function limparMensagens() {
-            const errorMsg = document.getElementById('errorMessage');
-            errorMsg.classList.remove('show');
-            errorMsg.textContent = '';
-        }
-
-        function mostrarErro(msg) {
-            limparMensagens();
-            const errorMsg = document.getElementById('errorMessage');
-            errorMsg.textContent = msg;
-            errorMsg.classList.add('show');
+            document.getElementById('errorMessage').classList.remove('show');
+            document.getElementById('errorMessage').textContent = '';
+            document.getElementById('successMessage').classList.remove('show');
+            document.getElementById('successMessage').textContent = '';
         }
 
         async function analisarTexto() {
@@ -763,7 +751,8 @@
                 }
 
                 mostrarResultados(resultado);
-                marcarQueJaUsouFerramenta();
+                mostrarSucesso('Análise concluída!');
+                esconderExemplos();
 
             } catch (error) {
                 mostrarErro(`Erro: ${error.message}`);
@@ -806,7 +795,7 @@
 
             if (resultado.sinais && Array.isArray(resultado.sinais) && resultado.sinais.length > 0) {
                 signalsContainer.innerHTML = resultado.sinais
-                    .map(sinal => `<div class="signal-item">${sinal}</div>`)
+                    .map(sinal => `<div class="signal-item">⚠️ ${sinal}</div>`)
                     .join('');
             } else {
                 signalsContainer.innerHTML = '<div class="signal-item">Nenhum sinal específico foi listado.</div>';
@@ -821,20 +810,32 @@
         function limparFormulario() {
             document.getElementById('texto').value = '';
             document.getElementById('resultados').style.display = 'none';
-            document.getElementById('btnLimpar').disabled = true;
             limparMensagens();
             document.getElementById('texto').focus();
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            esconderExemplosSeJaUsou();
+        function mostrarErro(msg) {
+            const errorMsg = document.getElementById('errorMessage');
+            const successMsg = document.getElementById('successMessage');
 
-            document.getElementById('texto').addEventListener('input', function () {
-                document.getElementById('btnLimpar').disabled = this.value.trim() === '';
-            });
-        });
+            successMsg.classList.remove('show');
+            successMsg.textContent = '';
 
+            errorMsg.textContent = msg;
+            errorMsg.classList.add('show');
+        }
 
+        function mostrarSucesso(msg) {
+            const successMsg = document.getElementById('successMessage');
+            const errorMsg = document.getElementById('errorMessage');
+
+            errorMsg.classList.remove('show');
+            errorMsg.textContent = '';
+
+            successMsg.textContent = msg;
+            successMsg.classList.add('show');
+            setTimeout(() => successMsg.classList.remove('show'), 3000);
+        }
 
         async function carregarEstatisticas() {
             try {
@@ -843,31 +844,28 @@
 
                 const stats = await response.json();
 
-                const riscoStats = stats.porRisco.map(r => {
-                    const id = r._id || '';
-                    const pct = stats.totalAnalises > 0 ? (r.quantidade / stats.totalAnalises) * 100 : 0;
-                    const label = id || 'Sem classificação';
-                    const cls = id === 'baixo' ? 'baixo' : id === 'medio' ? 'medio' : 'alto';
-                    return `
-                        <div class="stats-risco-item">
-                            <div class="stats-risco-header">
-                                <strong style="text-transform: capitalize;">${label}</strong>
-                                <span class="stats-risco-badge ${cls}">${r.quantidade} análises</span>
-                            </div>
-                            <div class="stats-bar-track">
-                                <div class="stats-bar-fill ${cls}" style="width: ${pct}%"></div>
-                            </div>
+                const riscoStats = stats.porRisco.map(r => `
+                    <div style="margin: 16px 0; padding: 16px; background: var(--light); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong style="text-transform: capitalize;">${r._id || 'Sem classificação'}</strong>
+                            <span style="background: ${r._id === 'baixo' ? '#10b981' : r._id === 'medio' ? '#f59e0b' : '#ef4444'}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9em; font-weight: bold;">${r.quantidade} análises</span>
                         </div>
-                    `;
-                }).join('');
+                        <div style="background: #e0e0e0; border-radius: 8px; height: 24px; overflow: hidden;">
+                            <div style="width: ${stats.totalAnalises > 0 ? (r.quantidade / stats.totalAnalises) * 100 : 0}%; height: 100%; background: ${r._id === 'baixo' ? '#10b981' : r._id === 'medio' ? '#f59e0b' : '#ef4444'}; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                `).join('');
 
                 document.getElementById('statsContainer').innerHTML = `
-                    <div class="stats-total">
-                        <div class="stats-total-number">${stats.totalAnalises || 0}</div>
-                        <div class="stats-total-label">Análises Realizadas</div>
+                    <div style="margin-bottom: 24px;">
+                        <div style="background: var(--light); padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+                            <div style="font-size: 2.5em; font-weight: bold; color: var(--primary);">${stats.totalAnalises || 0}</div>
+                            <div style="font-size: 1.1em; color: var(--text-light); margin-top: 8px;">Análises Realizadas</div>
+                        </div>
+
+                        <h3 style="margin-bottom: 16px;">Distribuição de Risco:</h3>
+                        ${riscoStats}
                     </div>
-                    <p class="stats-h3">Distribuição por Risco</p>
-                    ${riscoStats}
                 `;
 
             } catch (error) {
@@ -882,39 +880,23 @@
             localStorage.setItem('darkMode', isDarkMode ? 'true' : 'false');
 
             const btn = document.querySelector('.dark-mode-toggle');
-            btn.textContent = isDarkMode ? 'LIGHT' : 'DARK';
+            btn.textContent = isDarkMode ? '☀️' : '🌙';
         }
 
         window.addEventListener('load', () => {
             const isDarkMode = localStorage.getItem('darkMode') === 'true';
             if (isDarkMode) {
                 document.body.classList.add('dark-mode');
-                document.querySelector('.dark-mode-toggle').textContent = 'LIGHT';
+                document.querySelector('.dark-mode-toggle').textContent = '☀️';
             }
         });
 
-        function esconderExemplosSeJaUsou() {
-            const jaUsou = localStorage.getItem('jaUsouFerramenta');
+        function esconderExemplos() {
             const box = document.getElementById('examplesBox');
-            const disclaimer = document.getElementById('disclaimerBox');
-
-            if (jaUsou === 'true') {
-                if (box) box.style.display = 'none';
-                if (disclaimer) disclaimer.style.display = 'none';
+            if (box) {
+                box.style.display = 'none';
             }
         }
-
-        function marcarQueJaUsouFerramenta() {
-            localStorage.setItem('jaUsouFerramenta', 'true');
-
-            const box = document.getElementById('examplesBox');
-            if (box) box.style.display = 'none';
-
-            const disclaimer = document.getElementById('disclaimerBox');
-            if (disclaimer) disclaimer.style.display = 'none';
-        }
-
-
     </script>
 </body>
 </html>
