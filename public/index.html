@@ -680,7 +680,6 @@
                 </div>
 
                 <div class="error-message" id="errorMessage"></div>
-                <div class="success-message" id="successMessage"></div>
 
                 
                 <!-- Skeleton loader -->
@@ -700,7 +699,7 @@
                     </div>
                 </div>
 
-<div id="resultados" style="display: none; margin-top: 30px;">
+                <div id="resultados" style="display: none; margin-top: 30px;">
                     <div class="result-header">
                         <div class="risk-badge" id="riskBadge">
                             <span id="riskPercentage" class="risk-percentage">0%</span>
@@ -726,7 +725,6 @@
                         <h4> Recomendação</h4>
                         <p id="recommendation"></p>
                     </div>
-                </div>
 
                     <div class="copy-row">
                         <button class="btn-copy" id="btnCopiar" onclick="copiarResultado()">Copiar resultado</button>
@@ -805,10 +803,9 @@
         }
 
         function limparMensagens() {
-            document.getElementById('errorMessage').classList.remove('show');
-            document.getElementById('errorMessage').textContent = '';
-            document.getElementById('successMessage').classList.remove('show');
-            document.getElementById('successMessage').textContent = '';
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.classList.remove('show');
+            errorMsg.textContent = '';
         }
 
         async function analisarTexto() {
@@ -933,27 +930,12 @@
         }
 
         function mostrarErro(msg) {
+            limparMensagens();
             const errorMsg = document.getElementById('errorMessage');
-            const successMsg = document.getElementById('successMessage');
-
-            successMsg.classList.remove('show');
-            successMsg.textContent = '';
-
             errorMsg.textContent = msg;
             errorMsg.classList.add('show');
         }
 
-        function mostrarSucesso(msg) {
-            const successMsg = document.getElementById('successMessage');
-            const errorMsg = document.getElementById('errorMessage');
-
-            errorMsg.classList.remove('show');
-            errorMsg.textContent = '';
-
-            successMsg.textContent = msg;
-            successMsg.classList.add('show');
-            setTimeout(() => successMsg.classList.remove('show'), 3000);
-        }
 
         async function carregarEstatisticas() {
             try {
