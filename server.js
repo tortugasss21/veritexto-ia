@@ -194,6 +194,7 @@ Texto:
 
     const resultadoFinal = extrairResultadoDaResposta(respostaBruta, texto);
 
+    // cria objeto da análise
     const analise = new Analise({
       texto: resultadoFinal.texto,
       risco: resultadoFinal.risco,
@@ -203,12 +204,9 @@ Texto:
       recomendacao: resultadoFinal.recomendacao
     });
 
-    await analise.save();
-    console.log('✅ Análise salva!');
-
+    // RESPONDE PRIMEIRO
     res.json({
       sucesso: true,
-      id: analise._id,
       risco: resultadoFinal.risco,
       percentualRisco: resultadoFinal.percentualRisco,
       sinais: resultadoFinal.sinais,
@@ -216,15 +214,22 @@ Texto:
       recomendacao: resultadoFinal.recomendacao
     });
 
+    // SALVA DEPOIS, SEM TRAVAR O USUÁRIO
+    analise.save()
+      .then(() => console.log('✅ Análise salva!'))
+      .catch((err) => console.error('❌ Erro ao salvar análise:', err));
+
   } catch (error) {
     console.error('❌ Erro ao analisar:');
     console.error('status:', error?.status);
     console.error('message:', error?.message);
     console.error('full error:', error);
 
-    res.status(500).json({
-      erro: error?.message || 'Erro ao analisar texto.'
-    });
+    if (!res.headersSent) {
+      res.status(500).json({
+        erro: error?.message || 'Erro ao analisar texto.'
+      });
+    }
   }
 });
 
@@ -259,7 +264,7 @@ app.post('/api/feedback/:id', async (req, res) => {
   }
 });
 
-// ESTATÍSTICAS - VERSÃO MELHORADA (sem métrica enganosa)
+// ESTATÍSTICAS
 app.get('/api/estatisticas', async (req, res) => {
   try {
     const totalAnalises = await Analise.countDocuments();
@@ -273,9 +278,29 @@ app.get('/api/estatisticas', async (req, res) => {
       }
     ]);
 
+    const analisesComFeedback = await Analise.countDocuments({
+      'feedback.avaliacaoCorreta': { $exists: true }
+    });
+
+    const feedbackCorretos = await Analise.countDocuments({
+      'feedback.avaliacaoCorreta': true
+    });
+
+    const taxaAcerto = analisesComFeedback > 0
+      ? ((feedbackCorretos / analisesComFeedback) * 100).toFixed(2)
+      : 0;
+
+    const ultimas = await Analise.find()
+      .sort({ dataAnalise: -1 })
+      .limit(20);
+
     res.json({
       totalAnalises,
-      porRisco: analisesPorRisco
+      analisesComFeedback,
+      feedbackCorretos,
+      taxaAcerto: parseFloat(taxaAcerto),
+      porRisco: analisesPorRisco,
+      ultimas
     });
 
   } catch (error) {
