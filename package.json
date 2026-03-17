@@ -1,0 +1,19 @@
+{
+  "name": "veritexto-ia",
+  "version": "1.0.0",
+  "description": "VeriTexto IA - Detector de Desinformação",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.0.3",
+    "@anthropic-ai/sdk": "^0.28.0",
+    "cors": "^2.8.5",
+    "mongoose": "^8.0.0"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
