@@ -1,699 +1,240 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VeriTexto IA - Detector de Desinformação</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VeriTexto IA</title>
 
-        :root {
-            --primary: #0066ff;
-            --primary-dark: #0052cc;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            --light: #f8fafc;
-            --border: #e2e8f0;
-            --text: #333333;
-            --text-light: #666666;
-            --white: #ffffff;
-        }
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f8fafc 0%, #eef4ff 100%);
-            color: var(--text);
-            min-height: 100vh;
-        }
+:root {
+  --primary:#0066ff;
+  --success:#10b981;
+  --warning:#f59e0b;
+  --danger:#ef4444;
+  --light:#f8fafc;
+  --border:#e2e8f0;
+}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+body {
+  font-family: Arial;
+  background: linear-gradient(135deg,#f8fafc,#eef4ff);
+}
 
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            animation: slideDown 0.8s ease-out;
-        }
+.container {
+  max-width:900px;
+  margin:auto;
+  padding:20px;
+}
 
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+h1 {
+  text-align:center;
+  margin-bottom:10px;
+  color:var(--primary);
+}
 
-        .logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
+.subtitle {
+  text-align:center;
+  margin-bottom:30px;
+  color:#666;
+}
 
-        .logo-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--primary) 0%, #0052cc 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
-        }
+.card {
+  background:white;
+  padding:25px;
+  border-radius:12px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.08);
+}
 
-        h1 {
-            font-size: 2.5em;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, var(--primary) 0%, #0052cc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+textarea {
+  width:100%;
+  height:140px;
+  padding:10px;
+  border:2px solid var(--border);
+  border-radius:10px;
+}
 
-        .subtitle {
-            font-size: 1.1em;
-            color: var(--text-light);
-        }
+button {
+  padding:12px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+}
 
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            border-bottom: 2px solid var(--border);
-            flex-wrap: wrap;
-        }
+.btn-primary {
+  width:100%;
+  background:var(--primary);
+  color:white;
+  margin-top:10px;
+}
 
-        .tab-button {
-            padding: 12px 24px;
-            border: none;
-            background: none;
-            cursor: pointer;
-            font-size: 1.05em;
-            font-weight: 600;
-            color: var(--text-light);
-            transition: all 0.3s ease;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -2px;
-        }
+.btn-secondary {
+  margin-top:10px;
+}
 
-        .tab-button:hover {
-            color: var(--primary);
-        }
+.risk-badge {
+  width:100px;
+  height:100px;
+  border-radius:50%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  color:white;
+  font-weight:bold;
+}
 
-        .tab-button.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
+.risk-low { background:var(--success); }
+.risk-medium { background:var(--warning); }
+.risk-high { background:var(--danger); }
 
-        .tab-content {
-            display: none;
-        }
+.stat-box {
+  background:var(--light);
+  padding:20px;
+  border-radius:10px;
+  text-align:center;
+}
 
-        .tab-content.active {
-            display: block;
-        }
-
-        .card {
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--text);
-        }
-
-        textarea {
-            width: 100%;
-            height: 160px;
-            padding: 16px;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            font-family: inherit;
-            font-size: 1em;
-            resize: vertical;
-            transition: all 0.3s ease;
-            background: var(--light);
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: white;
-            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
-        }
-
-        .button-row {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 18px;
-            flex-wrap: wrap;
-        }
-
-        button {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            flex: 1;
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
-            min-width: 220px;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: var(--light);
-            color: var(--text);
-            border: 2px solid var(--border);
-        }
-
-        .btn-secondary:hover {
-            background: var(--border);
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .result-header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
-
-        .risk-badge {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: white;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-            flex-shrink: 0;
-        }
-
-        .risk-low {
-            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
-        }
-
-        .risk-medium {
-            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
-        }
-
-        .risk-high {
-            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
-        }
-
-        .risk-percentage {
-            font-size: 1.8em;
-            line-height: 1;
-        }
-
-        .risk-label {
-            font-size: 0.8em;
-            margin-top: 6px;
-            opacity: 0.95;
-        }
-
-        .section-title {
-            margin-bottom: 12px;
-            font-size: 1.2em;
-        }
-
-        .signal-item {
-            margin: 8px 0;
-            padding: 12px;
-            background: var(--light);
-            border-radius: 8px;
-        }
-
-        .info-box {
-            margin-top: 24px;
-            padding: 20px;
-            background: rgba(0, 102, 255, 0.05);
-            border-radius: 12px;
-            border-left: 4px solid var(--primary);
-        }
-
-        .info-box h4 {
-            color: var(--primary);
-            margin-bottom: 10px;
-        }
-
-        .error-message {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-            padding: 16px;
-            border-radius: 8px;
-            border-left: 4px solid var(--danger);
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .success-message {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-            padding: 16px;
-            border-radius: 8px;
-            border-left: 4px solid var(--success);
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .success-message.show {
-            display: block;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-        }
-
-        .stat-card {
-            padding: 20px;
-            background: var(--light);
-            border-radius: 12px;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 2em;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        .history-card {
-            margin: 12px 0;
-            padding: 16px;
-            background: var(--light);
-            border-radius: 8px;
-        }
-
-        .history-risk {
-            margin-top: 8px;
-            font-weight: 600;
-        }
-
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 1.8em;
-            }
-
-            .card {
-                padding: 20px;
-            }
-
-            .result-header {
-                align-items: flex-start;
-            }
-
-            .risk-badge {
-                width: 100px;
-                height: 100px;
-            }
-
-            .risk-percentage {
-                font-size: 1.5em;
-            }
-        }
-    </style>
+.error { color:red; margin-top:10px; }
+</style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">
-                <div class="logo-icon">🔍</div>
-                <h1>VeriTexto IA</h1>
-            </div>
-            <p class="subtitle">Detector de Possíveis Sinais de Desinformação</p>
-        </div>
 
-        <div class="tabs">
-            <button class="tab-button active" onclick="mudarAba('analise', this)">📝 Análise</button>
-            <button class="tab-button" onclick="mudarAba('historico', this)">📊 Histórico</button>
-            <button class="tab-button" onclick="mudarAba('estatisticas', this)">📈 Estatísticas</button>
-        </div>
+<div class="container">
 
-        <div id="analise" class="tab-content active">
-            <div class="card">
-                <div class="form-group">
-                    <label for="texto">Cole o texto a analisar:</label>
-                    <textarea id="texto" placeholder="Cole aqui uma manchete, notícia ou post..."></textarea>
-                </div>
+<h1>VeriTexto IA</h1>
+<p class="subtitle">Detector de Desinformação</p>
 
-                <div class="button-row">
-                    <button class="btn-primary" id="btnAnalisar" onclick="analisarTexto()">
-                        <span id="btnText">Analisar texto</span>
-                        <span id="spinner" style="display: none;" class="loading-spinner"></span>
-                    </button>
-                    <button class="btn-secondary" onclick="limparFormulario()">Limpar</button>
-                </div>
+<div class="card">
 
-                <div class="error-message" id="errorMessage"></div>
-                <div class="success-message" id="successMessage"></div>
+<textarea id="texto" placeholder="Cole um texto..."></textarea>
 
-                <div id="resultados" style="display: none; margin-top: 30px;">
-                    <div class="result-header">
-                        <div class="risk-badge" id="riskBadge">
-                            <span id="riskPercentage" class="risk-percentage">0%</span>
-                            <span class="risk-label">RISCO</span>
-                        </div>
-                        <div>
-                            <h2 id="riskTitle">Analisando...</h2>
-                            <p id="riskDescription">Aguarde...</p>
-                        </div>
-                    </div>
+<button class="btn-primary" onclick="analisarTexto()">Analisar</button>
+<button class="btn-secondary" onclick="limpar()">Limpar</button>
 
-                    <div style="margin-top: 24px;">
-                        <h3 class="section-title">🚨 Sinais Identificados</h3>
-                        <div id="signalsContainer"></div>
-                    </div>
+<p id="erro" class="error"></p>
 
-                    <div class="info-box">
-                        <h4>📝 Análise Detalhada</h4>
-                        <p id="explanation"></p>
-                    </div>
+<div id="resultado" style="display:none; margin-top:20px;">
 
-                    <div class="info-box">
-                        <h4>✅ Recomendação</h4>
-                        <p id="recommendation"></p>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div style="display:flex; gap:20px; align-items:center;">
+  <div id="badge" class="risk-badge"></div>
+  <div>
+    <h2 id="titulo"></h2>
+    <p id="desc"></p>
+  </div>
+</div>
 
-        <div id="historico" class="tab-content">
-            <div class="card">
-                <h2>Histórico de Análises</h2>
-                <div id="historicoContainer">
-                    <p>Carregando...</p>
-                </div>
-            </div>
-        </div>
+<h3 style="margin-top:20px;">Sinais</h3>
+<div id="sinais"></div>
 
-        <div id="estatisticas" class="tab-content">
-            <div class="card">
-                <h2>Estatísticas</h2>
-                <div id="statsContainer">
-                    <p>Carregando...</p>
-                </div>
-            </div>
-        </div>
-    </div>
+<h3 style="margin-top:20px;">Explicação</h3>
+<p id="explicacao"></p>
 
-    <script>
-        const API_URL = window.location.origin + '/api';
+<h3 style="margin-top:20px;">Recomendação</h3>
+<p id="recomendacao"></p>
 
-        function normalizarRisco(risco) {
-            if (!risco) return 'medium';
+</div>
 
-            const texto = String(risco)
-                .trim()
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '');
+</div>
 
-            if (texto === 'baixo' || texto === 'low') return 'low';
-            if (texto === 'medio' || texto === 'medium' || texto === 'med io') return 'medium';
-            if (texto === 'alto' || texto === 'high') return 'high';
+<div class="card" style="margin-top:20px;">
 
-            return 'medium';
-        }
+<h2>Estatísticas</h2>
 
-        function obterPercentual(resultado) {
-            const valor = Number(resultado?.percentualRisco);
+<div id="stats" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+</div>
 
-            if (!Number.isNaN(valor) && Number.isFinite(valor)) {
-                return Math.max(0, Math.min(100, Math.round(valor)));
-            }
+</div>
 
-            const risco = normalizarRisco(resultado?.risco);
+</div>
 
-            if (risco === 'high') return 85;
-            if (risco === 'medium') return 55;
-            return 20;
-        }
+<script>
 
-        function mudarAba(aba, botao) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+const API = window.location.origin + "/api";
 
-            document.getElementById(aba).classList.add('active');
-            if (botao) botao.classList.add('active');
+function limpar(){
+  document.getElementById("texto").value="";
+  document.getElementById("resultado").style.display="none";
+}
 
-            if (aba === 'historico') carregarHistorico();
-            if (aba === 'estatisticas') carregarEstatisticas();
-        }
+function normalizar(r){
+  r = (r||"").toLowerCase();
 
-        function limparMensagens() {
-            document.getElementById('errorMessage').classList.remove('show');
-            document.getElementById('errorMessage').textContent = '';
-            document.getElementById('successMessage').classList.remove('show');
-            document.getElementById('successMessage').textContent = '';
-        }
+  if(r.includes("alto")) return "high";
+  if(r.includes("medio") || r.includes("médio")) return "medium";
+  return "low";
+}
 
-        async function analisarTexto() {
-            const texto = document.getElementById('texto').value.trim();
-            const btnAnalisar = document.getElementById('btnAnalisar');
-            const spinner = document.getElementById('spinner');
-            const btnText = document.getElementById('btnText');
+async function analisarTexto(){
+  const texto = document.getElementById("texto").value;
 
-            limparMensagens();
+  try{
+    const res = await fetch(API+"/analisar",{
+      method:"POST",
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({texto})
+    });
 
-            if (!texto || texto.length < 20) {
-                mostrarErro('O texto deve ter pelo menos 20 caracteres.');
-                return;
-            }
+    const data = await res.json();
 
-            btnAnalisar.disabled = true;
-            spinner.style.display = 'inline-block';
-            btnText.style.display = 'none';
+    mostrar(data);
 
-            try {
-                const response = await fetch(`${API_URL}/analisar`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ texto })
-                });
+  }catch(e){
+    document.getElementById("erro").innerText = e.message;
+  }
+}
 
-                const contentType = response.headers.get('content-type') || '';
+function mostrar(d){
 
-                if (!contentType.includes('application/json')) {
-                    const textoErro = await response.text();
-                    throw new Error('A API não retornou JSON. Resposta recebida: ' + textoErro.substring(0, 100));
-                }
+  const risco = normalizar(d.risco);
 
-                const resultado = await response.json();
+  const badge = document.getElementById("badge");
+  badge.className = "risk-badge";
 
-                if (!response.ok) {
-                    throw new Error(resultado.erro || 'Erro ao analisar');
-                }
+  if(risco==="high") badge.classList.add("risk-high");
+  if(risco==="medium") badge.classList.add("risk-medium");
+  if(risco==="low") badge.classList.add("risk-low");
 
-                mostrarResultados(resultado);
-                mostrarSucesso('Análise concluída!');
+  badge.innerHTML = `<div>${d.percentualRisco || 50}%</div>`;
 
-            } catch (error) {
-                mostrarErro(`Erro: ${error.message}`);
-            } finally {
-                btnAnalisar.disabled = false;
-                spinner.style.display = 'none';
-                btnText.style.display = 'inline';
-            }
-        }
+  document.getElementById("titulo").innerText = "RISCO " + risco.toUpperCase();
+  document.getElementById("desc").innerText = "Análise automática";
 
-        function mostrarResultados(resultado) {
-            const riskBadge = document.getElementById('riskBadge');
-            const riskTitle = document.getElementById('riskTitle');
-            const riskDescription = document.getElementById('riskDescription');
-            const riskPercentage = document.getElementById('riskPercentage');
-            const signalsContainer = document.getElementById('signalsContainer');
-            const explanation = document.getElementById('explanation');
-            const recommendation = document.getElementById('recommendation');
+  document.getElementById("explicacao").innerText = d.explicacao;
+  document.getElementById("recomendacao").innerText = d.recomendacao;
 
-            const riscoNormalizado = normalizarRisco(resultado.risco);
-            const percentual = obterPercentual(resultado);
+  document.getElementById("sinais").innerHTML =
+    (d.sinais || []).map(s=>`<p>⚠️ ${s}</p>`).join("");
 
-            riskBadge.className = 'risk-badge';
+  document.getElementById("resultado").style.display="block";
 
-            if (riscoNormalizado === 'low') {
-                riskBadge.classList.add('risk-low');
-                riskTitle.textContent = 'RISCO BAIXO';
-                riskDescription.textContent = 'Poucos sinais de desinformação.';
-            } else if (riscoNormalizado === 'medium') {
-                riskBadge.classList.add('risk-medium');
-                riskTitle.textContent = 'RISCO MÉDIO';
-                riskDescription.textContent = 'Contém alguns sinais. Verifique em fontes confiáveis.';
-            } else {
-                riskBadge.classList.add('risk-high');
-                riskTitle.textContent = 'RISCO ALTO';
-                riskDescription.textContent = 'Vários sinais de desinformação. Não compartilhe sem verificar.';
-            }
+  carregarStats();
+}
 
-            riskPercentage.textContent = `${percentual}%`;
+async function carregarStats(){
 
-            if (resultado.sinais && Array.isArray(resultado.sinais) && resultado.sinais.length > 0) {
-                signalsContainer.innerHTML = resultado.sinais
-                    .map(sinal => `<div class="signal-item">⚠️ ${sinal}</div>`)
-                    .join('');
-            } else {
-                signalsContainer.innerHTML = '<div class="signal-item">Nenhum sinal específico foi listado.</div>';
-            }
+  const res = await fetch(API+"/estatisticas");
+  const s = await res.json();
 
-            explanation.textContent = resultado.explicacao || 'Sem explicação disponível.';
-            recommendation.textContent = resultado.recomendacao || 'Verifique a informação em fontes confiáveis antes de compartilhar.';
+  const riscos = {baixo:0, medio:0, alto:0};
 
-            document.getElementById('resultados').style.display = 'block';
-        }
+  (s.porRisco||[]).forEach(r=>{
+    riscos[r._id] = r.quantidade;
+  });
 
-        function limparFormulario() {
-            document.getElementById('texto').value = '';
-            document.getElementById('resultados').style.display = 'none';
-            limparMensagens();
-            document.getElementById('texto').focus();
-        }
+  document.getElementById("stats").innerHTML = `
+    <div class="stat-box">Total<br><b>${s.totalAnalises}</b></div>
+    <div class="stat-box">Baixo<br><b>${riscos.baixo||0}</b></div>
+    <div class="stat-box">Médio<br><b>${riscos.medio||0}</b></div>
+    <div class="stat-box">Alto<br><b>${riscos.alto||0}</b></div>
+  `;
+}
 
-        function mostrarErro(msg) {
-            const errorMsg = document.getElementById('errorMessage');
-            const successMsg = document.getElementById('successMessage');
+carregarStats();
 
-            successMsg.classList.remove('show');
-            successMsg.textContent = '';
+</script>
 
-            errorMsg.textContent = msg;
-            errorMsg.classList.add('show');
-        }
-
-        function mostrarSucesso(msg) {
-            const successMsg = document.getElementById('successMessage');
-            const errorMsg = document.getElementById('errorMessage');
-
-            errorMsg.classList.remove('show');
-            errorMsg.textContent = '';
-
-            successMsg.textContent = msg;
-            successMsg.classList.add('show');
-            setTimeout(() => successMsg.classList.remove('show'), 3000);
-        }
-
-        async function carregarHistorico() {
-            try {
-                const response = await fetch(`${API_URL}/analises`);
-                if (!response.ok) throw new Error('Erro ao carregar');
-
-                const analises = await response.json();
-                const historicoContainer = document.getElementById('historicoContainer');
-
-                if (!analises.length) {
-                    historicoContainer.innerHTML = '<p>Nenhuma análise realizada ainda.</p>';
-                    return;
-                }
-
-                historicoContainer.innerHTML = analises.map(a => {
-                    const percentual = obterPercentual(a);
-                    return `
-                        <div class="history-card">
-                            <strong>${(a.texto || '').substring(0, 100)}...</strong>
-                            <div class="history-risk">Risco: ${a.risco || 'não informado'} (${percentual}%)</div>
-                        </div>
-                    `;
-                }).join('');
-
-            } catch (error) {
-                document.getElementById('historicoContainer').innerHTML = '<p style="color: var(--danger);">Erro ao carregar.</p>';
-            }
-        }
-
-        async function carregarEstatisticas() {
-            try {
-                const response = await fetch(`${API_URL}/estatisticas`);
-                if (!response.ok) throw new Error('Erro ao carregar');
-
-                const stats = await response.json();
-
-                document.getElementById('statsContainer').innerHTML = `
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-number">${stats.totalAnalises || 0}</div>
-                            <div>Total de Análises</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number">${stats.taxaAcerto || 0}%</div>
-                            <div>Taxa de Acerto</div>
-                        </div>
-                    </div>
-                `;
-            } catch (error) {
-                document.getElementById('statsContainer').innerHTML = '<p style="color: var(--danger);">Erro ao carregar.</p>';
-            }
-        }
-    </script>
 </body>
 </html>
