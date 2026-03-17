@@ -43,20 +43,18 @@
         }
 
 
-        .navbar {
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 0 20px 0;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 32px;
         }
 
-        .navbar-brand {
+        .header-brand {
             display: flex;
             align-items: center;
             gap: 10px;
-            text-decoration: none;
         }
 
         .logo-icon {
@@ -74,16 +72,18 @@
             flex-shrink: 0;
         }
 
-        .navbar-title {
+        .header-text { text-align: left; }
+
+        .header-title {
             font-size: 1.15em;
             font-weight: 700;
             color: var(--text);
+            line-height: 1.2;
         }
 
-        .navbar-subtitle {
+        .header-subtitle {
             font-size: 0.8em;
             color: var(--text-light);
-            margin-top: 1px;
         }
 
         .tabs {
@@ -233,7 +233,7 @@
             to   { opacity: 1; transform: translateX(0); }
         }
 
-        .card {
+        .card.animate-in {
             animation: fadeIn 0.3s ease both;
         }
 
@@ -521,11 +521,7 @@
             gap: 10px;
         }
 
-        body.dark-mode .navbar {
-            border-bottom-color: #4a4a5e;
-        }
-
-        body.dark-mode .navbar-title {
+        body.dark-mode .header-title {
             color: #e0e0e0;
         }
 
@@ -660,16 +656,16 @@
 </head>
 <body>
     <div class="container">
-        <nav class="navbar">
-            <div class="navbar-brand">
+        <div class="header">
+            <div class="header-brand">
                 <div class="logo-icon">VT</div>
-                <div>
-                    <div class="navbar-title">VeriTexto</div>
-                    <div class="navbar-subtitle">Detector de sinais de desinformação</div>
+                <div class="header-text">
+                    <div class="header-title">VeriTexto</div>
+                    <div class="header-subtitle">Detector de sinais de desinformação</div>
                 </div>
             </div>
             <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Alternar modo escuro" id="darkBtn">DARK</button>
-        </nav>
+        </div>
 
         <div class="tabs">
             <button class="tab-button active" onclick="mudarAba('analise', this)">Análise</button>
@@ -996,6 +992,9 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             esconderExemplosSeJaUsou();
+
+            // Animate cards on load only
+            document.querySelectorAll('.card').forEach(c => c.classList.add('animate-in'));
 
             document.getElementById('texto').addEventListener('input', function () {
                 document.getElementById('btnLimpar').disabled = this.value.trim() === '';
