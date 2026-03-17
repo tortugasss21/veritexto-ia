@@ -29,6 +29,7 @@
             background: linear-gradient(135deg, #f8fafc 0%, #eef4ff 100%);
             color: var(--text);
             min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         .container {
@@ -137,6 +138,7 @@
             padding: 30px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             margin-bottom: 20px;
+            transition: all 0.3s ease;
         }
 
         .form-group {
@@ -303,6 +305,39 @@
             margin-bottom: 10px;
         }
 
+        .disclaimer-box {
+            background: #fff3cd;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            border-left: 4px solid #ff9800;
+        }
+
+        .disclaimer-box strong {
+            color: #f57c00;
+            font-size: 1.1em;
+        }
+
+        .disclaimer-box ul {
+            margin-top: 12px;
+            margin-left: 20px;
+            list-style: none;
+        }
+
+        .disclaimer-box li {
+            margin: 8px 0;
+        }
+
+        .disclaimer-box a {
+            color: #f57c00;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .disclaimer-box a:hover {
+            text-decoration: underline;
+        }
+
         .error-message {
             background: rgba(239, 68, 68, 0.1);
             color: var(--danger);
@@ -342,6 +377,12 @@
             background: var(--light);
             border-radius: 12px;
             text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.1);
         }
 
         .stat-number {
@@ -350,16 +391,140 @@
             color: var(--primary);
         }
 
-        .history-card {
-            margin: 12px 0;
-            padding: 16px;
-            background: var(--light);
-            border-radius: 8px;
+        .stat-label {
+            color: var(--text-light);
+            margin-top: 8px;
         }
 
-        .history-risk {
-            margin-top: 8px;
+        .examples-box {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .examples-title {
+            font-size: 0.9em;
+            color: var(--text-light);
+            margin-bottom: 12px;
             font-weight: 600;
+        }
+
+        .examples-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* DARK MODE */
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d3d 100%);
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .card {
+            background: #2a2a3e;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        body.dark-mode .card h2,
+        body.dark-mode .card h3,
+        body.dark-mode .card h4 {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode textarea {
+            background: #3a3a4e;
+            color: #e0e0e0;
+            border-color: #4a4a5e;
+        }
+
+        body.dark-mode textarea:focus {
+            background: #2a2a3e;
+        }
+
+        body.dark-mode .form-group label {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .error-message {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        body.dark-mode .success-message {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        body.dark-mode .signal-item {
+            background: #3a3a4e;
+        }
+
+        body.dark-mode .info-box {
+            background: rgba(0, 102, 255, 0.15);
+        }
+
+        body.dark-mode .disclaimer-box {
+            background: rgba(255, 152, 0, 0.2);
+        }
+
+        body.dark-mode .btn-secondary {
+            background: #3a3a4e;
+            color: #e0e0e0;
+            border-color: #4a4a5e;
+        }
+
+        body.dark-mode .btn-secondary:hover {
+            background: #4a4a5e;
+        }
+
+        body.dark-mode .tab-button {
+            color: #a0a0b0;
+        }
+
+        body.dark-mode .tab-button:hover,
+        body.dark-mode .tab-button.active {
+            color: var(--primary);
+        }
+
+        body.dark-mode .tabs {
+            border-bottom-color: #4a4a5e;
+        }
+
+        body.dark-mode .stat-card {
+            background: #3a3a4e;
+        }
+
+        body.dark-mode .subtitle {
+            color: #a0a0b0;
+        }
+
+        /* Botão Dark Mode */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dark-mode-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background: #fbbf24;
         }
 
         @media (max-width: 768px) {
@@ -383,6 +548,12 @@
             .risk-percentage {
                 font-size: 1.5em;
             }
+
+            .dark-mode-toggle {
+                width: 45px;
+                height: 45px;
+                font-size: 1.2em;
+            }
         }
     </style>
 </head>
@@ -398,12 +569,24 @@
 
         <div class="tabs">
             <button class="tab-button active" onclick="mudarAba('analise', this)">📝 Análise</button>
-            <button class="tab-button" onclick="mudarAba('historico', this)">📊 Histórico</button>
             <button class="tab-button" onclick="mudarAba('estatisticas', this)">📈 Estatísticas</button>
         </div>
 
         <div id="analise" class="tab-content active">
             <div class="card">
+                <!-- MELHORIA 2: DISCLAIMER CLARO -->
+                <div class="disclaimer-box">
+                    <strong>⚠️ IMPORTANTE:</strong><br>
+                    Este sistema detecta <strong>sinais de possível desinformação</strong>, não a verdade absoluta.
+                    <br><br>
+                    Para verificações confiáveis, use plataformas profissionais:
+                    <ul>
+                        <li><strong>Lupa</strong> - <a href="https://lupa.news" target="_blank">lupa.news</a></li>
+                        <li><strong>Aos Fatos</strong> - <a href="https://aosfatos.org" target="_blank">aosfatos.org</a></li>
+                        <li><strong>Boatos.org</strong> - <a href="https://boatos.org" target="_blank">boatos.org</a></li>
+                    </ul>
+                </div>
+
                 <div class="form-group">
                     <label for="texto">Cole o texto a analisar:</label>
                     <textarea id="texto" placeholder="Cole aqui uma manchete, notícia ou post..."></textarea>
@@ -415,6 +598,16 @@
                         <span id="spinner" style="display: none;" class="loading-spinner"></span>
                     </button>
                     <button class="btn-secondary" onclick="limparFormulario()">Limpar</button>
+                </div>
+
+                <!-- MELHORIA 5: EXEMPLOS PRÉ-CARREGADOS -->
+                <div class="examples-box">
+                    <div class="examples-title">📋 Exemplos para testar:</div>
+                    <div class="examples-buttons">
+                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_alto')">Risco Alto 🔴</button>
+                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_medio')">Risco Médio 🟡</button>
+                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_baixo')">Risco Baixo 🟢</button>
+                    </div>
                 </div>
 
                 <div class="error-message" id="errorMessage"></div>
@@ -450,15 +643,17 @@
             </div>
         </div>
 
-        <div id="historico" class="tab-content">
+        <!-- MELHORIA 1: HISTÓRICO REMOVIDO (COMENTADO) -->
+        <!-- <div id="historico" class="tab-content">
             <div class="card">
                 <h2>Histórico de Análises</h2>
                 <div id="historicoContainer">
                     <p>Carregando...</p>
                 </div>
             </div>
-        </div>
+        </div> -->
 
+        <!-- MELHORIA 3: ESTATÍSTICAS CORRIGIDAS -->
         <div id="estatisticas" class="tab-content">
             <div class="card">
                 <h2>Estatísticas</h2>
@@ -469,8 +664,26 @@
         </div>
     </div>
 
+    <!-- MELHORIA 4: BOTÃO DARK MODE -->
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Alternar modo escuro">🌙</button>
+
     <script>
         const API_URL = window.location.origin + '/api';
+
+        // MELHORIA 5: EXEMPLOS PRÉ-CARREGADOS
+        const exemplos = {
+            exemplo_alto: "URGENTE! COMPARTILHE ANTES QUE APAGUEM! Cientistas descobrem verdade que o governo quer esconder! Clique aqui para saber mais!",
+            exemplo_medio: "Pesquisa indica que redes sociais podem afetar a saúde mental. Alguns especialistas concordam, enquanto outros discordam dos resultados.",
+            exemplo_baixo: "Segundo estudo publicado pela Universidade de São Paulo em 2025, exercício físico regular beneficia a saúde cardiovascular. A pesquisa durou 2 anos e envolveu 500 participantes."
+        };
+
+        function inserirExemplo(tipo) {
+            const texto = exemplos[tipo];
+            if (texto) {
+                document.getElementById('texto').value = texto;
+                document.getElementById('texto').focus();
+            }
+        }
 
         function normalizarRisco(risco) {
             if (!risco) return 'medium';
@@ -509,7 +722,6 @@
             document.getElementById(aba).classList.add('active');
             if (botao) botao.classList.add('active');
 
-            if (aba === 'historico') carregarHistorico();
             if (aba === 'estatisticas') carregarEstatisticas();
         }
 
@@ -643,34 +855,7 @@
             setTimeout(() => successMsg.classList.remove('show'), 3000);
         }
 
-        async function carregarHistorico() {
-            try {
-                const response = await fetch(`${API_URL}/analises`);
-                if (!response.ok) throw new Error('Erro ao carregar');
-
-                const analises = await response.json();
-                const historicoContainer = document.getElementById('historicoContainer');
-
-                if (!analises.length) {
-                    historicoContainer.innerHTML = '<p>Nenhuma análise realizada ainda.</p>';
-                    return;
-                }
-
-                historicoContainer.innerHTML = analises.map(a => {
-                    const percentual = obterPercentual(a);
-                    return `
-                        <div class="history-card">
-                            <strong>${(a.texto || '').substring(0, 100)}...</strong>
-                            <div class="history-risk">Risco: ${a.risco || 'não informado'} (${percentual}%)</div>
-                        </div>
-                    `;
-                }).join('');
-
-            } catch (error) {
-                document.getElementById('historicoContainer').innerHTML = '<p style="color: var(--danger);">Erro ao carregar.</p>';
-            }
-        }
-
+        // MELHORIA 3: ESTATÍSTICAS CORRIGIDAS (sem taxa de acerto enganosa)
         async function carregarEstatisticas() {
             try {
                 const response = await fetch(`${API_URL}/estatisticas`);
@@ -678,22 +863,53 @@
 
                 const stats = await response.json();
 
-                document.getElementById('statsContainer').innerHTML = `
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-number">${stats.totalAnalises || 0}</div>
-                            <div>Total de Análises</div>
+                const riscoStats = stats.porRisco.map(r => `
+                    <div style="margin: 16px 0; padding: 16px; background: var(--light); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong style="text-transform: capitalize;">${r._id || 'Sem classificação'}</strong>
+                            <span style="background: ${r._id === 'baixo' ? '#10b981' : r._id === 'medio' ? '#f59e0b' : '#ef4444'}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9em; font-weight: bold;">${r.quantidade} análises</span>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-number">${stats.taxaAcerto || 0}%</div>
-                            <div>Taxa de Acerto</div>
+                        <div style="background: #e0e0e0; border-radius: 8px; height: 24px; overflow: hidden;">
+                            <div style="width: ${stats.totalAnalises > 0 ? (r.quantidade / stats.totalAnalises) * 100 : 0}%; height: 100%; background: ${r._id === 'baixo' ? '#10b981' : r._id === 'medio' ? '#f59e0b' : '#ef4444'}; transition: width 0.3s ease;"></div>
                         </div>
                     </div>
+                `).join('');
+
+                document.getElementById('statsContainer').innerHTML = `
+                    <div style="margin-bottom: 24px;">
+                        <div style="background: var(--light); padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
+                            <div style="font-size: 2.5em; font-weight: bold; color: var(--primary);">${stats.totalAnalises || 0}</div>
+                            <div style="font-size: 1.1em; color: var(--text-light); margin-top: 8px;">Análises Realizadas</div>
+                        </div>
+                        
+                        <h3 style="margin-bottom: 16px;">Distribuição de Risco:</h3>
+                        ${riscoStats}
+                    </div>
                 `;
+
             } catch (error) {
-                document.getElementById('statsContainer').innerHTML = '<p style="color: var(--danger);">Erro ao carregar.</p>';
+                document.getElementById('statsContainer').innerHTML = '<p style="color: var(--danger);">Erro ao carregar estatísticas.</p>';
             }
         }
+
+        // MELHORIA 4: DARK MODE
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDarkMode ? 'true' : 'false');
+            
+            const btn = document.querySelector('.dark-mode-toggle');
+            btn.textContent = isDarkMode ? '☀️' : '🌙';
+        }
+
+        window.addEventListener('load', () => {
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                document.querySelector('.dark-mode-toggle').textContent = '☀️';
+            }
+        });
     </script>
 </body>
 </html>
