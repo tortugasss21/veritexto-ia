@@ -34,7 +34,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 760px;
             margin: 0 auto;
             padding: 20px;
             min-height: 100vh;
@@ -45,17 +45,6 @@
         .header {
             text-align: center;
             margin-bottom: 40px;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .logo {
@@ -131,11 +120,10 @@
 
         .card {
             background: white;
-            border-radius: 16px;
+            border-radius: 8px;
             padding: 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
             margin-bottom: 20px;
-            transition: all 0.3s ease;
         }
 
         .form-group {
@@ -253,15 +241,15 @@
         }
 
         .risk-low {
-            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            background: var(--success);
         }
 
         .risk-medium {
-            background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);
+            background: var(--warning);
         }
 
         .risk-high {
-            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+            background: var(--danger);
         }
 
         .risk-percentage {
@@ -349,47 +337,77 @@
             display: block;
         }
 
-        .success-message {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
-            padding: 16px;
-            border-radius: 8px;
-            border-left: 4px solid var(--success);
-            margin-bottom: 20px;
-            display: none;
-        }
 
-        .success-message.show {
-            display: block;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-        }
-
-        .stat-card {
-            padding: 20px;
+        .stats-total {
             background: var(--light);
-            border-radius: 12px;
+            padding: 20px;
+            border-radius: 8px;
             text-align: center;
-            transition: all 0.3s ease;
+            margin-bottom: 20px;
         }
 
-        .stat-card:hover {
-            background: #e8edf2;
-        }
-
-        .stat-number {
-            font-size: 2em;
+        .stats-total-number {
+            font-size: 2.5em;
             font-weight: bold;
             color: var(--primary);
         }
 
-        .stat-label {
+        .stats-total-label {
+            font-size: 1.1em;
             color: var(--text-light);
             margin-top: 8px;
+        }
+
+        .stats-risco-item {
+            margin: 16px 0;
+            padding: 16px;
+            background: var(--light);
+            border-radius: 8px;
+        }
+
+        .stats-risco-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .stats-risco-badge {
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .stats-risco-badge.baixo { background: var(--success); }
+        .stats-risco-badge.medio { background: var(--warning); }
+        .stats-risco-badge.alto  { background: var(--danger); }
+
+        .stats-bar-track {
+            background: #e0e0e0;
+            border-radius: 4px;
+            height: 10px;
+            overflow: hidden;
+        }
+
+        .stats-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+
+        .stats-bar-fill.baixo { background: var(--success); }
+        .stats-bar-fill.medio { background: var(--warning); }
+        .stats-bar-fill.alto  { background: var(--danger); }
+
+        .stats-h3 {
+            margin-bottom: 16px;
+            font-size: 1em;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .examples-box {
@@ -581,7 +599,7 @@
                         <span id="btnText">Analisar texto</span>
                         <span id="spinner" style="display: none;" class="loading-spinner"></span>
                     </button>
-                    <button class="btn-secondary" onclick="limparFormulario()">Limpar</button>
+                    <button class="btn-secondary" id="btnLimpar" onclick="limparFormulario()" disabled>Limpar</button>
                 </div>
 
                 <div class="examples-box" id="examplesBox">
@@ -594,7 +612,6 @@
                 </div>
 
                 <div class="error-message" id="errorMessage"></div>
-                <div class="success-message" id="successMessage"></div>
 
                 <div id="resultados" style="display: none; margin-top: 30px;">
                     <div class="result-header">
@@ -696,10 +713,16 @@
         }
 
         function limparMensagens() {
-            document.getElementById('errorMessage').classList.remove('show');
-            document.getElementById('errorMessage').textContent = '';
-            document.getElementById('successMessage').classList.remove('show');
-            document.getElementById('successMessage').textContent = '';
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.classList.remove('show');
+            errorMsg.textContent = '';
+        }
+
+        function mostrarErro(msg) {
+            limparMensagens();
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.textContent = msg;
+            errorMsg.classList.add('show');
         }
 
         async function analisarTexto() {
@@ -740,7 +763,6 @@
                 }
 
                 mostrarResultados(resultado);
-                mostrarSucesso('Análise concluída!');
                 marcarQueJaUsouFerramenta();
 
             } catch (error) {
@@ -799,32 +821,20 @@
         function limparFormulario() {
             document.getElementById('texto').value = '';
             document.getElementById('resultados').style.display = 'none';
+            document.getElementById('btnLimpar').disabled = true;
             limparMensagens();
             document.getElementById('texto').focus();
         }
 
-        function mostrarErro(msg) {
-            const errorMsg = document.getElementById('errorMessage');
-            const successMsg = document.getElementById('successMessage');
+        document.addEventListener('DOMContentLoaded', () => {
+            esconderExemplosSeJaUsou();
 
-            successMsg.classList.remove('show');
-            successMsg.textContent = '';
+            document.getElementById('texto').addEventListener('input', function () {
+                document.getElementById('btnLimpar').disabled = this.value.trim() === '';
+            });
+        });
 
-            errorMsg.textContent = msg;
-            errorMsg.classList.add('show');
-        }
 
-        function mostrarSucesso(msg) {
-            const successMsg = document.getElementById('successMessage');
-            const errorMsg = document.getElementById('errorMessage');
-
-            errorMsg.classList.remove('show');
-            errorMsg.textContent = '';
-
-            successMsg.textContent = msg;
-            successMsg.classList.add('show');
-            setTimeout(() => successMsg.classList.remove('show'), 3000);
-        }
 
         async function carregarEstatisticas() {
             try {
@@ -833,28 +843,31 @@
 
                 const stats = await response.json();
 
-                const riscoStats = stats.porRisco.map(r => `
-                    <div style="margin: 16px 0; padding: 16px; background: var(--light); border-radius: 8px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <strong style="text-transform: capitalize;">${r._id || 'Sem classificação'}</strong>
-                            <span style="background: ${r._id === 'baixo' ? '#10b981' : r._id === 'medio' ? '#f59e0b' : '#ef4444'}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9em; font-weight: bold;">${r.quantidade} análises</span>
+                const riscoStats = stats.porRisco.map(r => {
+                    const id = r._id || '';
+                    const pct = stats.totalAnalises > 0 ? (r.quantidade / stats.totalAnalises) * 100 : 0;
+                    const label = id || 'Sem classificação';
+                    const cls = id === 'baixo' ? 'baixo' : id === 'medio' ? 'medio' : 'alto';
+                    return `
+                        <div class="stats-risco-item">
+                            <div class="stats-risco-header">
+                                <strong style="text-transform: capitalize;">${label}</strong>
+                                <span class="stats-risco-badge ${cls}">${r.quantidade} análises</span>
+                            </div>
+                            <div class="stats-bar-track">
+                                <div class="stats-bar-fill ${cls}" style="width: ${pct}%"></div>
+                            </div>
                         </div>
-                        <div style="background: #e0e0e0; border-radius: 8px; height: 24px; overflow: hidden;">
-                            <div style="width: ${stats.totalAnalises > 0 ? (r.quantidade / stats.totalAnalises) * 100 : 0}%; height: 100%; background: ${r._id === 'baixo' ? '#10b981' : r._id === 'medio' ? '#f59e0b' : '#ef4444'}; transition: width 0.3s ease;"></div>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
 
                 document.getElementById('statsContainer').innerHTML = `
-                    <div style="margin-bottom: 24px;">
-                        <div style="background: var(--light); padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
-                            <div style="font-size: 2.5em; font-weight: bold; color: var(--primary);">${stats.totalAnalises || 0}</div>
-                            <div style="font-size: 1.1em; color: var(--text-light); margin-top: 8px;">Análises Realizadas</div>
-                        </div>
-
-                        <h3 style="margin-bottom: 16px;">Distribuição de Risco:</h3>
-                        ${riscoStats}
+                    <div class="stats-total">
+                        <div class="stats-total-number">${stats.totalAnalises || 0}</div>
+                        <div class="stats-total-label">Análises Realizadas</div>
                     </div>
+                    <p class="stats-h3">Distribuição por Risco</p>
+                    ${riscoStats}
                 `;
 
             } catch (error) {
@@ -901,9 +914,7 @@
             if (disclaimer) disclaimer.style.display = 'none';
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            esconderExemplosSeJaUsou();
-        });
+
     </script>
 </body>
 </html>
