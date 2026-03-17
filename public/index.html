@@ -27,7 +27,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #f8fafc 0%, #eef4ff 100%);
+            background: #f4f6f8;
             color: var(--text);
             min-height: 100vh;
             transition: background 0.3s ease, color 0.3s ease;
@@ -45,7 +45,6 @@
         .header {
             text-align: center;
             margin-bottom: 40px;
-            animation: slideDown 0.8s ease-out;
         }
 
         @keyframes slideDown {
@@ -70,24 +69,21 @@
         .logo-icon {
             width: 48px;
             height: 48px;
-            background: linear-gradient(135deg, var(--primary) 0%, #0052cc 100%);
-            border-radius: 12px;
+            background: var(--primary);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         h1 {
             font-size: 2.5em;
             margin-bottom: 8px;
-            background: linear-gradient(135deg, var(--primary) 0%, #0052cc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--primary);
         }
 
         .subtitle {
@@ -193,17 +189,15 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            background: var(--primary);
             color: white;
             flex: 1;
             justify-content: center;
-            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
             min-width: 220px;
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
+            background: var(--primary-dark);
         }
 
         .btn-primary:disabled {
@@ -288,9 +282,11 @@
 
         .signal-item {
             margin: 8px 0;
-            padding: 12px;
+            padding: 12px 14px;
             background: var(--light);
             border-radius: 8px;
+            border-left: 3px solid var(--warning);
+            font-size: 0.95em;
         }
 
         .info-box {
@@ -382,8 +378,7 @@
         }
 
         .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.1);
+            background: #e8edf2;
         }
 
         .stat-number {
@@ -418,7 +413,7 @@
 
         /* DARK MODE */
         body.dark-mode {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d3d 100%);
+            background: #1a1a2e;
             color: #e0e0e0;
         }
 
@@ -498,34 +493,29 @@
             color: #a0a0b0;
         }
 
-        /* Botão Dark Mode */
         .dark-mode-toggle {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
             background: var(--primary);
             border: none;
             color: white;
-            font-size: 1.5em;
+            font-size: 0.75em;
+            font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
-            transition: all 0.3s ease;
+            transition: background 0.2s ease;
             z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        .dark-mode-toggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 20px rgba(0, 102, 255, 0.4);
+            letter-spacing: 0.5px;
         }
 
         body.dark-mode .dark-mode-toggle {
-            background: #fbbf24;
+            background: #4a4a5e;
         }
 
         @media (max-width: 768px) {
@@ -562,22 +552,21 @@
     <div class="container">
         <div class="header">
             <div class="logo">
-                <div class="logo-icon">🔍</div>
+                <div class="logo-icon">VT</div>
                 <h1>VeriTexto</h1>
             </div>
             <p class="subtitle">Detector de Possíveis Sinais de Desinformação</p>
         </div>
 
         <div class="tabs">
-            <button class="tab-button active" onclick="mudarAba('analise', this)">📝 Análise</button>
-            <button class="tab-button" onclick="mudarAba('estatisticas', this)">📈 Estatísticas</button>
+            <button class="tab-button active" onclick="mudarAba('analise', this)">Análise</button>
+            <button class="tab-button" onclick="mudarAba('estatisticas', this)">Estatísticas</button>
         </div>
 
         <div id="analise" class="tab-content active">
             <div class="card">
-                <div class="disclaimer-box">
-                    <strong>⚠️ IMPORTANTE:</strong><br>
-                    Este sistema detecta <strong>sinais de possível desinformação</strong>, não a verdade absoluta.
+                <div class="disclaimer-box" id="disclaimerBox">
+                    <strong>Atenção:</strong> Este sistema detecta <strong>sinais de possível desinformação</strong>, não a verdade absoluta.
                     <br><br>
                     Sempre consulte sites confiáveis para garantir a veracidade das informações. 
                 </div>
@@ -596,11 +585,11 @@
                 </div>
 
                 <div class="examples-box" id="examplesBox">
-                    <div class="examples-title">📋 Exemplos para testar:</div>
+                    <div class="examples-title">Exemplos para testar:</div>
                     <div class="examples-buttons">
-                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_alto')">Risco Alto 🔴</button>
-                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_medio')">Risco Médio 🟡</button>
-                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_baixo')">Risco Baixo 🟢</button>
+                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_alto')">Risco Alto</button>
+                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_medio')">Risco Médio</button>
+                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_baixo')">Risco Baixo</button>
                     </div>
                 </div>
 
@@ -620,17 +609,17 @@
                     </div>
 
                     <div style="margin-top: 24px;">
-                        <h3 class="section-title">🚨 Sinais Identificados</h3>
+                        <h3 class="section-title">Sinais Identificados</h3>
                         <div id="signalsContainer"></div>
                     </div>
 
                     <div class="info-box">
-                        <h4>📝 Análise Detalhada</h4>
+                        <h4>Análise Detalhada</h4>
                         <p id="explanation"></p>
                     </div>
 
                     <div class="info-box">
-                        <h4>✅ Recomendação</h4>
+                        <h4>Recomendação</h4>
                         <p id="recommendation"></p>
                     </div>
                 </div>
@@ -647,7 +636,7 @@
         </div>
     </div>
 
-    <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Alternar modo escuro">🌙</button>
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Alternar modo escuro" id="darkBtn">DARK</button>
 
     <script>
         const API_URL = window.location.origin + '/api';
@@ -795,7 +784,7 @@
 
             if (resultado.sinais && Array.isArray(resultado.sinais) && resultado.sinais.length > 0) {
                 signalsContainer.innerHTML = resultado.sinais
-                    .map(sinal => `<div class="signal-item">⚠️ ${sinal}</div>`)
+                    .map(sinal => `<div class="signal-item">${sinal}</div>`)
                     .join('');
             } else {
                 signalsContainer.innerHTML = '<div class="signal-item">Nenhum sinal específico foi listado.</div>';
@@ -880,23 +869,25 @@
             localStorage.setItem('darkMode', isDarkMode ? 'true' : 'false');
 
             const btn = document.querySelector('.dark-mode-toggle');
-            btn.textContent = isDarkMode ? '☀️' : '🌙';
+            btn.textContent = isDarkMode ? 'LIGHT' : 'DARK';
         }
 
         window.addEventListener('load', () => {
             const isDarkMode = localStorage.getItem('darkMode') === 'true';
             if (isDarkMode) {
                 document.body.classList.add('dark-mode');
-                document.querySelector('.dark-mode-toggle').textContent = '☀️';
+                document.querySelector('.dark-mode-toggle').textContent = 'LIGHT';
             }
         });
 
         function esconderExemplosSeJaUsou() {
             const jaUsou = localStorage.getItem('jaUsouFerramenta');
             const box = document.getElementById('examplesBox');
+            const disclaimer = document.getElementById('disclaimerBox');
 
-            if (jaUsou === 'true' && box) {
-                box.style.display = 'none';
+            if (jaUsou === 'true') {
+                if (box) box.style.display = 'none';
+                if (disclaimer) disclaimer.style.display = 'none';
             }
         }
 
@@ -904,9 +895,10 @@
             localStorage.setItem('jaUsouFerramenta', 'true');
 
             const box = document.getElementById('examplesBox');
-            if (box) {
-                box.style.display = 'none';
-            }
+            if (box) box.style.display = 'none';
+
+            const disclaimer = document.getElementById('disclaimerBox');
+            if (disclaimer) disclaimer.style.display = 'none';
         }
 
         document.addEventListener('DOMContentLoaded', () => {
