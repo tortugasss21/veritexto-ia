@@ -11,10 +11,40 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ===================== RATE LIMITING =====================
+const requestCounts = new Map();
+const RATE_LIMIT = 10;
+const RATE_WINDOW = 60 * 1000;
+
+function rateLimit(req, res, next) {
+  const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+  const now = Date.now();
+  const entry = requestCounts.get(ip);
+
+  if (!entry || now - entry.start > RATE_WINDOW) {
+    requestCounts.set(ip, { count: 1, start: now });
+    return next();
+  }
+
+  if (entry.count >= RATE_LIMIT) {
+    return res.status(429).json({ erro: 'Muitas requisições. Aguarde um minuto.' });
+  }
+
+  entry.count++;
+  next();
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of requestCounts.entries()) {
+    if (now - entry.start > RATE_WINDOW) requestCounts.delete(ip);
+  }
+}, 5 * 60 * 1000);
+
 // ===================== MONGODB =====================
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ MongoDB conectado!'))
-  .catch((err) => console.log('❌ Erro MongoDB:', err));
+  .then(() => console.log('MongoDB conectado.'))
+  .catch((err) => console.error('Erro MongoDB:', err));
 
 // ===================== SCHEMA =====================
 const analiseSchema = new mongoose.Schema({
@@ -40,10 +70,12 @@ const client = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1'
 });
 
+const AI_MODEL = process.env.AI_MODEL || 'google/gemini-flash-1.5';
+const AI_TIMEOUT_MS = 20000;
+
 // ===================== FUNÇÕES AUXILIARES =====================
 function limparJsonString(texto) {
   if (!texto) return '';
-
   return texto
     .replace(/```json/gi, '')
     .replace(/```/g, '')
@@ -52,17 +84,14 @@ function limparJsonString(texto) {
 
 function normalizarRisco(risco) {
   if (!risco) return 'medio';
-
   const texto = String(risco)
     .trim()
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
-
   if (texto === 'baixo' || texto === 'low') return 'baixo';
   if (texto === 'medio' || texto === 'medium' || texto === 'med io') return 'medio';
   if (texto === 'alto' || texto === 'high') return 'alto';
-
   return 'medio';
 }
 
@@ -71,19 +100,13 @@ function normalizarResultado(resultado, textoOriginal = '') {
 
   let percentualRisco = Number(resultado?.percentualRisco);
   if (Number.isNaN(percentualRisco) || !Number.isFinite(percentualRisco)) {
-    if (risco === 'alto') percentualRisco = 85;
-    else if (risco === 'medio') percentualRisco = 55;
-    else percentualRisco = 20;
+    percentualRisco = risco === 'alto' ? 85 : risco === 'medio' ? 55 : 20;
   }
-
   percentualRisco = Math.max(0, Math.min(100, Math.round(percentualRisco)));
 
-  let sinais = [];
-  if (Array.isArray(resultado?.sinais)) {
-    sinais = resultado.sinais
-      .map(item => String(item).trim())
-      .filter(Boolean);
-  }
+  const sinais = Array.isArray(resultado?.sinais)
+    ? resultado.sinais.map(s => String(s).trim()).filter(Boolean)
+    : [];
 
   const explicacao = resultado?.explicacao
     ? String(resultado.explicacao).trim()
@@ -93,14 +116,7 @@ function normalizarResultado(resultado, textoOriginal = '') {
     ? String(resultado.recomendacao).trim()
     : 'Verifique a informação em fontes confiáveis antes de compartilhar.';
 
-  return {
-    texto: textoOriginal,
-    risco,
-    percentualRisco,
-    sinais,
-    explicacao,
-    recomendacao
-  };
+  return { texto: textoOriginal, risco, percentualRisco, sinais, explicacao, recomendacao };
 }
 
 function criarResultadoFallback(textoOriginal = '') {
@@ -109,24 +125,21 @@ function criarResultadoFallback(textoOriginal = '') {
     risco: 'medio',
     percentualRisco: 50,
     sinais: ['A resposta da IA não veio em formato ideal'],
-    explicacao: 'O sistema não conseguiu interpretar completamente a resposta da IA, então foi gerado um resultado de segurança.',
+    explicacao: 'O sistema não conseguiu interpretar a resposta da IA. Foi gerado um resultado de segurança.',
     recomendacao: 'Tente novamente e verifique a informação em fontes confiáveis antes de compartilhar.'
   };
 }
 
 function extrairResultadoDaResposta(resposta, textoOriginal = '') {
   const textoLimpo = limparJsonString(resposta);
-
-  if (!textoLimpo) {
-    return criarResultadoFallback(textoOriginal);
-  }
+  if (!textoLimpo) return criarResultadoFallback(textoOriginal);
 
   try {
     const jsonDireto = JSON.parse(textoLimpo);
     if (jsonDireto && typeof jsonDireto === 'object') {
       return normalizarResultado(jsonDireto, textoOriginal);
     }
-  } catch (e) {}
+  } catch (_) {}
 
   const match = textoLimpo.match(/\{[\s\S]*\}/);
   if (match) {
@@ -135,7 +148,7 @@ function extrairResultadoDaResposta(resposta, textoOriginal = '') {
       if (jsonExtraido && typeof jsonExtraido === 'object') {
         return normalizarResultado(jsonExtraido, textoOriginal);
       }
-    } catch (e) {}
+    } catch (_) {}
   }
 
   return criarResultadoFallback(textoOriginal);
@@ -143,26 +156,27 @@ function extrairResultadoDaResposta(resposta, textoOriginal = '') {
 
 // ===================== ROTAS =====================
 
-// TESTE
 app.get('/api/teste', (req, res) => {
   res.json({ ok: true, mensagem: 'API funcionando!' });
 });
 
 // ANALISAR TEXTO
-app.post('/api/analisar', async (req, res) => {
+app.post('/api/analisar', rateLimit, async (req, res) => {
   try {
     const { texto } = req.body;
 
     if (!texto || texto.trim().length < 20) {
-      return res.status(400).json({
-        erro: 'O texto deve ter pelo menos 20 caracteres.'
-      });
+      return res.status(400).json({ erro: 'O texto deve ter pelo menos 20 caracteres.' });
     }
 
-    console.log('📝 Analisando texto...');
+    console.log('Analisando texto...');
 
-    const completion = await client.chat.completions.create({
-      model: 'openrouter/free',
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('A IA demorou demais para responder. Tente novamente.')), AI_TIMEOUT_MS)
+    );
+
+    const completionPromise = client.chat.completions.create({
+      model: AI_MODEL,
       messages: [
         {
           role: 'system',
@@ -189,12 +203,13 @@ Texto:
       ]
     });
 
+    const completion = await Promise.race([completionPromise, timeoutPromise]);
+
     const respostaBruta = completion?.choices?.[0]?.message?.content || '';
-    console.log('📥 Resposta bruta da IA:', respostaBruta);
+    console.log('Resposta bruta da IA:', respostaBruta);
 
     const resultadoFinal = extrairResultadoDaResposta(respostaBruta, texto);
 
-    // cria objeto da análise
     const analise = new Analise({
       texto: resultadoFinal.texto,
       risco: resultadoFinal.risco,
@@ -204,7 +219,6 @@ Texto:
       recomendacao: resultadoFinal.recomendacao
     });
 
-    // RESPONDE PRIMEIRO
     res.json({
       sucesso: true,
       risco: resultadoFinal.risco,
@@ -214,21 +228,14 @@ Texto:
       recomendacao: resultadoFinal.recomendacao
     });
 
-    // SALVA DEPOIS, SEM TRAVAR O USUÁRIO
     analise.save()
-      .then(() => console.log('✅ Análise salva!'))
-      .catch((err) => console.error('❌ Erro ao salvar análise:', err));
+      .then((doc) => console.log('Análise salva. id:', doc._id))
+      .catch((err) => console.error('Erro ao salvar análise:', err));
 
   } catch (error) {
-    console.error('❌ Erro ao analisar:');
-    console.error('status:', error?.status);
-    console.error('message:', error?.message);
-    console.error('full error:', error);
-
+    console.error('Erro ao analisar:', error?.message);
     if (!res.headersSent) {
-      res.status(500).json({
-        erro: error?.message || 'Erro ao analisar texto.'
-      });
+      res.status(500).json({ erro: error?.message || 'Erro ao analisar texto.' });
     }
   }
 });
@@ -239,15 +246,13 @@ app.post('/api/feedback/:id', async (req, res) => {
     const { avaliacaoCorreta, observacoes } = req.body;
     const { id } = req.params;
 
+    if (typeof avaliacaoCorreta !== 'boolean') {
+      return res.status(400).json({ erro: 'avaliacaoCorreta deve ser true ou false.' });
+    }
+
     const analise = await Analise.findByIdAndUpdate(
       id,
-      {
-        feedback: {
-          avaliacaoCorreta,
-          observacoes,
-          dataFeedback: new Date()
-        }
-      },
+      { feedback: { avaliacaoCorreta, observacoes: observacoes || '', dataFeedback: new Date() } },
       { new: true }
     );
 
@@ -255,11 +260,11 @@ app.post('/api/feedback/:id', async (req, res) => {
       return res.status(404).json({ erro: 'Análise não encontrada.' });
     }
 
-    console.log('✅ Feedback salvo!');
-    res.json({ sucesso: true, analise });
+    console.log('Feedback salvo. id:', id);
+    res.json({ sucesso: true });
 
   } catch (error) {
-    console.error('❌ Erro ao salvar feedback:', error);
+    console.error('Erro ao salvar feedback:', error);
     res.status(500).json({ erro: 'Erro ao salvar feedback.' });
   }
 });
@@ -270,12 +275,7 @@ app.get('/api/estatisticas', async (req, res) => {
     const totalAnalises = await Analise.countDocuments();
 
     const analisesPorRisco = await Analise.aggregate([
-      {
-        $group: {
-          _id: '$risco',
-          quantidade: { $sum: 1 }
-        }
-      }
+      { $group: { _id: '$risco', quantidade: { $sum: 1 } } }
     ]);
 
     const analisesComFeedback = await Analise.countDocuments({
@@ -287,24 +287,19 @@ app.get('/api/estatisticas', async (req, res) => {
     });
 
     const taxaAcerto = analisesComFeedback > 0
-      ? ((feedbackCorretos / analisesComFeedback) * 100).toFixed(2)
+      ? parseFloat(((feedbackCorretos / analisesComFeedback) * 100).toFixed(2))
       : 0;
-
-    const ultimas = await Analise.find()
-      .sort({ dataAnalise: -1 })
-      .limit(20);
 
     res.json({
       totalAnalises,
       analisesComFeedback,
       feedbackCorretos,
-      taxaAcerto: parseFloat(taxaAcerto),
-      porRisco: analisesPorRisco,
-      ultimas
+      taxaAcerto,
+      porRisco: analisesPorRisco
     });
 
   } catch (error) {
-    console.error('❌ Erro ao obter estatísticas:', error);
+    console.error('Erro ao obter estatísticas:', error);
     res.status(500).json({ erro: 'Erro ao obter estatísticas.' });
   }
 });
@@ -313,31 +308,13 @@ app.get('/api/estatisticas', async (req, res) => {
 app.get('/api/analise/:id', async (req, res) => {
   try {
     const analise = await Analise.findById(req.params.id);
-
     if (!analise) {
       return res.status(404).json({ erro: 'Análise não encontrada.' });
     }
-
     res.json(analise);
-
   } catch (error) {
-    console.error('❌ Erro ao obter análise:', error);
+    console.error('Erro ao obter análise:', error);
     res.status(500).json({ erro: 'Erro ao obter análise.' });
-  }
-});
-
-// LISTAR ANÁLISES
-app.get('/api/analises', async (req, res) => {
-  try {
-    const analises = await Analise.find()
-      .sort({ dataAnalise: -1 })
-      .limit(100);
-
-    res.json(analises);
-
-  } catch (error) {
-    console.error('❌ Erro ao listar análises:', error);
-    res.status(500).json({ erro: 'Erro ao listar análises.' });
   }
 });
 
@@ -352,5 +329,5 @@ app.get('/', (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
 });
