@@ -68,17 +68,9 @@
         }
 
         .logo-icon {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, var(--primary) 0%, #0052cc 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0, 102, 255, 0.3);
+            width: 52px;
+            height: 52px;
+            flex-shrink: 0;
         }
 
         h1 {
@@ -637,7 +629,9 @@
     <div class="container">
         <div class="header">
             <div class="logo">
-                <div class="logo-icon"></div>
+                <div class="logo-icon">
+                    <img src="/favicon.png" alt="VT" style="width:100%;height:100%;object-fit:contain;">
+                </div>
                 <h1>VeriTexto</h1>
             </div>
             <p class="subtitle">Detector de Possíveis Sinais de Desinformação</p>
