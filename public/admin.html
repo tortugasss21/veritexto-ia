@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin VeriTexto</title>
+</head>
+<body>
+
+<h1>Admin</h1>
+
+<div id="login">
+  <input id="user" placeholder="usuário">
+  <input id="pass" placeholder="senha" type="password">
+  <button onclick="login()">Entrar</button>
+</div>
+
+<div id="painel" style="display:none;">
+  <h2>Histórico</h2>
+  <div id="dados"></div>
+</div>
+
+<script>
+
+const API = window.location.origin + "/api";
+
+async function login(){
+  const user = document.getElementById("user").value;
+  const pass = document.getElementById("pass").value;
+
+  const res = await fetch(API+"/login",{
+    method:"POST",
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({user,pass})
+  });
+
+  const data = await res.json();
+
+  if(data.sucesso){
+    localStorage.setItem("token","admin-logado");
+    document.getElementById("login").style.display="none";
+    document.getElementById("painel").style.display="block";
+    carregar();
+  } else {
+    alert("erro login");
+  }
+}
+
+async function carregar(){
+
+  const res = await fetch(API+"/admin/analises",{
+    headers:{Authorization:localStorage.getItem("token")}
+  });
+
+  const dados = await res.json();
+
+  document.getElementById("dados").innerHTML =
+    dados.map(d => `
+      <div style="border:1px solid #ccc; margin:10px; padding:10px;">
+        <b>${d.texto.substring(0,50)}</b><br>
+        risco: ${d.risco} (${d.percentualRisco}%)
+      </div>
+    `).join("");
+
+}
+
+</script>
+
+</body>
+</html>
