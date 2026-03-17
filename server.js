@@ -59,7 +59,7 @@ app.post('/api/analisar', async (req, res) => {
     console.log('📝 Analisando texto...');
 
     const message = await client.messages.create({
-      model: 'claude-opus-4-20250805',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1000,
       messages: [
         {
