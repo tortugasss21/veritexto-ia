@@ -4,14 +4,16 @@
   "description": "VeriTexto IA - Detector de Desinformação com Inteligência Artificial",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node server.js"
   },
   "keywords": [
     "fake-news",
     "desinformacao",
-    "inteligencia-artificial"
+    "inteligencia-artificial",
+    "educacao-midiatica"
   ],
-  "author": "Seu Nome",
+  "author": "Eduardo",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
