@@ -20,7 +20,8 @@
     "dotenv": "^16.0.3",
     "cors": "^2.8.5",
     "mongoose": "^8.0.0",
-    "@google/generative-ai": "^0.21.0"
+    "@google/generative-ai": "^0.21.0",
+    "cheerio": "^1.0.0"
   },
   "engines": {
     "node": "18.x"
