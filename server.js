@@ -454,6 +454,27 @@ RESPOSTA ESPERADA (JSON):
   }
 });
 
+
+// ESTATÍSTICAS PÚBLICAS
+app.get('/api/estatisticas', async (req, res) => {
+  try {
+    const totalAnalises = await Analise.countDocuments();
+    const porRisco = await Analise.aggregate([
+      { $group: { _id: '$risco', quantidade: { $sum: 1 } } },
+      { $sort: { quantidade: -1 } }
+    ]);
+    const porTipo = await Analise.aggregate([
+      { $match: { tipo: { $ne: null } } },
+      { $group: { _id: '$tipo', quantidade: { $sum: 1 } } },
+      { $sort: { quantidade: -1 } },
+      { $limit: 5 }
+    ]);
+    res.json({ totalAnalises, porRisco, porTipo });
+  } catch (error) {
+    console.error('Erro ao obter estatísticas:', error);
+    res.status(500).json({ erro: 'Erro ao obter estatísticas.' });
+  }
+});
 // REGISTRAR FEEDBACK
 app.post('/api/feedback', rateLimit, async (req, res) => {
   try {
