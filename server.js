@@ -175,7 +175,7 @@ app.post('/api/analisar', rateLimit, async (req, res) => {
       messages: [
         {
           role: 'system',
-          content: 'Você é um especialista em análise de desinformação. Responda somente em JSON válido.'
+          content: `Você é um especialista em análise de desinformação. Responda somente em JSON válido. A data de hoje é ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}. Não considere datas passadas como "datas futuras".`
         },
         {
           role: 'user',
