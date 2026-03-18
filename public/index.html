@@ -628,7 +628,7 @@
             background: var(--primary);
             border: none;
             color: white;
-            font-size: 0.7em;
+            font-size: 1.2em;
             font-weight: 700;
             letter-spacing: 0.5px;
             cursor: pointer;
@@ -928,14 +928,14 @@
                     </div>
 
                     <div style="margin-top: 24px;">
-                        <h3 class="section-title">Sinais Identificados</h3>
+                        <h3 class="section-title">
+                            Sinais Identificados
+                            <span id="sinaisCount" style="font-weight: normal; color: var(--text-light); font-size: 0.85em; margin-left: 8px;">(0 sinais)</span>
+                        </h3>
                         <div id="signalsContainer"></div>
                     </div>
 
-                    <div style="margin-top: 20px;" id="fatoresSection" style="display:none">
-                        <h3 class="section-title">Peso dos Fatores</h3>
-                        <div class="fatores-list" id="fatoresContainer"></div>
-                    </div>
+                    <!-- REMOVIDO: Seção de "Peso dos Fatores" (deixava confuso) -->
 
                     <div class="info-box">
                         <h4>Análise Detalhada</h4>
@@ -975,7 +975,12 @@
         </div>
     </div>
 
-    <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Alternar modo escuro"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
+    <button class="dark-mode-toggle" 
+            onclick="toggleDarkMode()" 
+            title="Alternar tema (Tecla D)"
+            aria-label="Alternar modo escuro">
+        <span id="darkModeEmoji">🌙</span>
+    </button>
 
     <script>
         const API_URL = window.location.origin + '/api';
@@ -1157,6 +1162,11 @@
             confiancaBadge.style.display = 'inline-flex';
 
             // ── Sinais ──
+            const sinaisCount = resultado.sinais?.length || 0;
+            
+            // ✨ NOVO: Atualizar contador de sinais
+            document.getElementById('sinaisCount').textContent = `(${sinaisCount} sinal${sinaisCount !== 1 ? 's' : ''})`;
+            
             if (resultado.sinais && resultado.sinais.length > 0) {
                 signalsContainer.innerHTML = resultado.sinais
                     .map((s, i) => `<div class="signal-item" style="animation-delay:${i * 0.07}s">${s}</div>`)
@@ -1165,22 +1175,8 @@
                 signalsContainer.innerHTML = '<div class="signal-item">Nenhum sinal específico identificado.</div>';
             }
 
-            // ── Fatores ──
-            const fatoresSection   = document.getElementById('fatoresSection');
-            const fatoresContainer = document.getElementById('fatoresContainer');
-            if (resultado.fatores && resultado.fatores.length > 0) {
-                fatoresSection.style.display = 'block';
-                fatoresContainer.innerHTML   = resultado.fatores.map(f => `
-                    <div class="fator-item">
-                        <span class="fator-desc">${f.descricao}</span>
-                        <div class="fator-bar-track">
-                            <div class="fator-bar-fill" style="width:${Math.min(f.peso, 100)}%"></div>
-                        </div>
-                        <span class="fator-peso">+${f.peso}%</span>
-                    </div>`).join('');
-            } else {
-                fatoresSection.style.display = 'none';
-            }
+            // ✗ REMOVIDO: Seção de fatores (deixava confuso)
+            // Agora o percentual é calculado baseado em sinais reais
 
             // ── Explicação e recomendação ──
             explanation.textContent    = resultado.explicacao    || 'Sem explicação disponível.';
@@ -1321,15 +1317,18 @@
             const isDarkMode = document.body.classList.contains('dark-mode');
             localStorage.setItem('darkMode', isDarkMode ? 'true' : 'false');
 
-            const btn = document.querySelector('.dark-mode-toggle');
-            btn.innerHTML = isDarkMode ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>` : `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+            // ✨ NOVO: Mudar emoji
+            const emoji = document.getElementById('darkModeEmoji');
+            emoji.textContent = isDarkMode ? '☀️' : '🌙';
         }
 
         window.addEventListener('load', () => {
             const isDarkMode = localStorage.getItem('darkMode') === 'true';
             if (isDarkMode) {
                 document.body.classList.add('dark-mode');
-                document.querySelector('.dark-mode-toggle').innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+                document.getElementById('darkModeEmoji').textContent = '☀️';
+            } else {
+                document.getElementById('darkModeEmoji').textContent = '🌙';
             }
         });
 
@@ -1395,6 +1394,13 @@
             document.getElementById('texto').addEventListener('input', function () {
                 document.getElementById('btnLimpar').disabled = this.value.trim() === '';
             });
+        });
+
+        // ✨ NOVO: Atalho de teclado para dark mode (tecla D)
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'd' || e.key === 'D') && !document.activeElement.matches('textarea, input')) {
+                toggleDarkMode();
+            }
         });
     </script>
 </body>
