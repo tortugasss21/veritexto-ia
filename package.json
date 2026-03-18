@@ -1,7 +1,7 @@
 {
   "name": "veritexto-ia",
   "version": "1.0.0",
-  "description": "VeriTexto IA - Detector de Desinformação com Inteligência Artificial",
+  "description": "VeriTexto IA - Detector de Desinforma\u00e7\u00e3o com Intelig\u00eancia Artificial",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -20,7 +20,7 @@
     "dotenv": "^16.0.3",
     "cors": "^2.8.5",
     "mongoose": "^8.0.0",
-    "@google/generative-ai": "^0.4.0"
+    "@google/generative-ai": "^0.21.0"
   },
   "engines": {
     "node": "18.x"
