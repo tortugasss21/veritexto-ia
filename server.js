@@ -244,13 +244,16 @@ RESPOSTA ESPERADA (JSON):
 
     const userPrompt = `Analise o seguinte texto quanto a possíveis sinais de desinformação:\n\n"${texto}"`;
 
-    // ✅ CORRIGIDO: model criado com systemInstruction por chamada
+    // ✅ responseMimeType força JSON puro, sem texto extra
     const model = genAI.getGenerativeModel({
       model: 'gemini-2.5-flash-lite',
       systemInstruction: systemPrompt,
+      generationConfig: {
+        responseMimeType: 'application/json',
+        temperature: 0.2,
+      },
     });
 
-    // ✅ CORRIGIDO: apenas o userPrompt é passado para generateContent
     const result = await model.generateContent(userPrompt);
 
     const respostaCompleta = result.response.text();
