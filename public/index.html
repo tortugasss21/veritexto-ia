@@ -1176,7 +1176,7 @@
             if (aba === 'feedbacks') carregarFeedbacks('todos');
         }
 
-        // ✨ NOVO: VERIFICAR AUTENTICAÇÃO PARA FEEDBACKS
+        //VERIFICAR AUTENTICAÇÃO PARA FEEDBACKS
         function verificarAutenticacaoFeedbacks(event) {
             event.preventDefault();
             const token = localStorage.getItem('feedbacksToken');
@@ -1242,7 +1242,7 @@
             mudarAba('analise', document.querySelector('.tab-button.active'));
         }
 
-        // ✨ NOVO: CARREGAR FEEDBACKS COM AUTENTICAÇÃO
+        // CARREGAR FEEDBACKS COM AUTENTICAÇÃO
         async function carregarFeedbacks(tipo = 'todos', token = null) {
             try {
                 // Se não tiver token, tenta do localStorage
@@ -1478,7 +1478,7 @@
             // ── Sinais ──
             const sinaisCount = resultado.sinais?.length || 0;
             
-            // ✨ NOVO: Atualizar contador de sinais
+            //Atualizar contador de sinais
             document.getElementById('sinaisCount').textContent = `(${sinaisCount} sinal${sinaisCount !== 1 ? 's' : ''})`;
             
             if (resultado.sinais && resultado.sinais.length > 0) {
@@ -1631,7 +1631,7 @@
             const isDarkMode = document.body.classList.contains('dark-mode');
             localStorage.setItem('darkMode', isDarkMode ? 'true' : 'false');
 
-            // ✨ NOVO: Mudar emoji
+            // Mudar
             const emoji = document.getElementById('darkModeEmoji');
             emoji.textContent = isDarkMode ? 'Light' : 'Dark';
         }
@@ -1710,7 +1710,7 @@
             });
         });
 
-        // ✨ NOVO: Atalho de teclado para dark mode (tecla D)
+        //Atalho de teclado para dark mode (tecla D)
         document.addEventListener('keydown', (e) => {
             if ((e.key === 'd' || e.key === 'D') && !document.activeElement.matches('textarea, input')) {
                 toggleDarkMode();
