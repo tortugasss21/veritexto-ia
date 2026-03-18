@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const OpenAI = require('openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 dotenv.config();
 
@@ -67,13 +67,9 @@ const analiseSchema = new mongoose.Schema({
 
 const Analise = mongoose.model('Analise', analiseSchema);
 
-// ===================== OPENROUTER =====================
-const client = new OpenAI({
-  apiKey: process.env.OPENROUTER_API_KEY,
-  baseURL: 'https://openrouter.ai/api/v1'
-});
-
-const AI_MODEL = process.env.AI_MODEL || 'openrouter/free';
+// ===================== GOOGLE GEMINI API =====================
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 // ===================== FUNÇÕES AUXILIARES =====================
 function limparJsonString(texto) {
@@ -195,12 +191,7 @@ app.post('/api/analisar', rateLimit, async (req, res) => {
 
     const dataHoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-    const completion = await client.chat.completions.create({
-      model: AI_MODEL,
-      messages: [
-        {
-          role: 'system',
-          content: `Você é um especialista em verificação de fatos e análise de desinformação. Responda somente em JSON válido.
+    const systemPrompt = `Você é um especialista em verificação de fatos e análise de desinformação. Responda somente em JSON válido.
 
 A data de hoje é ${dataHoje}. Qualquer data anterior a hoje é passada — nunca a trate como "data futura".
 
@@ -223,166 +214,92 @@ Critérios para identificar sinais de desinformação:
 7. Apelos emocionais ou sensacionalismo exagerado
 8. Teoria da conspiração ou alegações de supressão de informação
 
-IMPORTANTE: Seja consistente. Se o texto tem boas fontes e linguagem neutra, retorne risco BAIXO com sinais vazio.`
-        },
-        {
-          role: 'user',
-          content: `Analise este texto e retorne JSON:
-"URGENTE!! Vacinas causam autismo, estudo secreto do governo prova! Compartilhe antes que apaguem essa verdade!"`
-        },
-        {
-          role: 'assistant',
-          content: JSON.stringify({
-            risco: "alto",
-            percentualRisco: 92,
-            confiabilidade: "alta",
-            tipo: "Teoria da conspiração",
-            fatores: [
-              { descricao: "Linguagem alarmista e urgência artificial", peso: 30 },
-              { descricao: "Alegação de supressão governamental sem prova", peso: 25 },
-              { descricao: "Afirmação científica falsa e refutada", peso: 25 },
-              { descricao: "Pressão emocional para viralizar", peso: 12 }
-            ],
-            sinais: [
-              "Uso de 'URGENTE!!' e apelo para compartilhar antes de 'apagarem'",
-              "Afirmação médica amplamente refutada pela ciência",
-              "Teoria de estudo secreto sem fonte verificável",
-              "Pressão para ação imediata (sinal clássico de desinformação)"
-            ],
-            explicacao: "O texto usa múltiplos marcadores clássicos de desinformação: urgência artificial, teoria conspiratória de supressão governamental e uma afirmação médica falsa. A relação vacinas-autismo foi extensivamente estudada e refutada.",
-            recomendacao: "Não compartilhe. Consulte OMS, Fiocruz ou Ministério da Saúde para informações sobre vacinas.",
-            fontesSugeridas: ["Ministério da Saúde", "OMS", "Fiocruz", "Google Notícias"]
-          })
-        },
-        {
-          role: 'user',
-          content: `Analise este texto e retorne JSON:
-"Segundo relatório do IBGE em março de 2025, o Brasil registrou crescimento de 2,1% no PIB no último trimestre, impulsionado pelo setor agrícola."`
-        },
-        {
-          role: 'assistant',
-          content: JSON.stringify({
-            risco: "baixo",
-            percentualRisco: 0,
-            confiabilidade: "alta",
-            tipo: "Informação verificável",
-            fatores: [],
-            sinais: [],
-            explicacao: "O texto cita fonte verificável (IBGE), apresenta dado específico (2,1%), indica período claro e setor responsável. Linguagem neutra, informativa e sem apelos emocionais. Nenhum sinal de desinformação identificado.",
-            recomendacao: "O texto apresenta características de informação jornalística confiável. Você pode compartilhar, mas considere verificar diretamente no site do IBGE para dados mais atualizados.",
-            fontesSugeridas: ["IBGE", "Google Notícias", "Agência Brasil"]
-          })
-        },
-        {
-          role: 'user',
-          content: `Analise este texto e retorne APENAS JSON válido, sem markdown, sem crases, sem texto extra.
+TIPOS DE DESINFORMAÇÃO:
+- "boato": Boato viral sem base em fatos verificáveis
+- "satira_mal_interpretada": Conteúdo satírico que foi levado a sério
+- "contexto_manipulado": Informação real mas com contexto enganoso
+- "noticia_falsa": Notícia fabricada imitando jornalismo real
+- "teoria_conspiração": Alegações de conspiração sem evidências sólidas
+- "desinfo_política": Informação falsa sobre política e políticos
+- "desinfo_saude": Informação falsa sobre saúde ou tratamentos
+- "deepfake": Vídeo/áudio falso criado com IA
+- null: Não é desinformação, é informação legítima
 
-Formato obrigatório:
+CONFIABILIDADE:
+- "alta": Texto com fontes confiáveis, dados verificáveis, linguagem neutra
+- "media": Texto com alguns sinais de dúvida mas não confirmado como falso
+- "baixa": Texto com múltiplos sinais de desconfiança, inconsistências, sem fontes
+
+RESPOSTA ESPERADA (JSON):
 {
-  "risco": "baixo|medio|alto",
-  "percentualRisco": número 0-100,
-  "confiabilidade": "alta|media|baixa",
-  "tipo": "descrição curta do tipo (ex: Sensacionalismo, Teoria da conspiração, Desinformação científica, Informação verificável, Contexto manipulado, Clickbait)",
-  "fatores": [{"descricao": "fator", "peso": número}],
-  "sinais": ["sinal 1", "sinal 2"],
-  "explicacao": "explicação clara e objetiva",
-  "recomendacao": "recomendação prática",
-  "fontesSugeridas": ["fonte 1", "fonte 2"]
-}
+  "risco": "baixo" | "medio" | "alto",
+  "percentualRisco": 0-100,
+  "confiabilidade": "alta" | "media" | "baixa",
+  "tipo": "boato" | "satira_mal_interpretada" | "contexto_manipulado" | "noticia_falsa" | "teoria_conspiração" | "desinfo_política" | "desinfo_saude" | "deepfake" | null,
+  "fatores": [
+    { "descricao": "Descrição do fator", "peso": 1-10 },
+    { "descricao": "Descrição do fator", "peso": 1-10 }
+  ],
+  "sinais": ["Sinal 1", "Sinal 2", ...],
+  "explicacao": "Explicação detalhada em português",
+  "recomendacao": "Recomendação de ação",
+  "fontesSugeridas": ["Fonte 1", "Fonte 2", ...]
+}`;
 
-Importante: Se o texto não tem sinais claros de desinformação, retorne sinais como array vazio [], NÃO invente sinais.
+    const userPrompt = `Analise o seguinte texto quanto a possíveis sinais de desinformação:\n\n"${texto}"`;
 
-Texto:
-"${texto.replace(/"/g, '\\"')}"`
-        }
-      ]
-    });
+    const result = await model.generateContent([
+      { text: systemPrompt },
+      { text: userPrompt }
+    ]);
 
-    const respostaBruta = completion?.choices?.[0]?.message?.content || '';
-    console.log('Resposta da IA:', respostaBruta.substring(0, 200));
+    const respostaCompleta = result.response.text();
+    const analiseResultado = extrairResultadoDaResposta(respostaCompleta, texto);
 
-    const resultadoFinal = extrairResultadoDaResposta(respostaBruta, texto);
+    // Salvar no MongoDB
+    const analise = new Analise(analiseResultado);
+    await analise.save();
 
-    const analiseId = new mongoose.Types.ObjectId();
-    const analise = new Analise({ _id: analiseId, ...resultadoFinal });
-
-    res.json({
-      sucesso: true,
-      id: analiseId,
-      risco: resultadoFinal.risco,
-      percentualRisco: resultadoFinal.percentualRisco,
-      confiabilidade: resultadoFinal.confiabilidade,
-      tipo: resultadoFinal.tipo,
-      fatores: resultadoFinal.fatores,
-      sinais: resultadoFinal.sinais,
-      fontesSugeridas: resultadoFinal.fontesSugeridas,
-      explicacao: resultadoFinal.explicacao,
-      recomendacao: resultadoFinal.recomendacao
-    });
-
-    analise.save()
-      .then(doc => console.log('Análise salva. id:', doc._id))
-      .catch(err => console.error('Erro ao salvar:', err));
-
+    res.json({ ...analiseResultado, _id: analise._id });
   } catch (error) {
-    console.error('Erro ao analisar:', error?.message);
-    if (!res.headersSent) {
-      res.status(500).json({ erro: error?.message || 'Erro ao analisar texto.' });
-    }
+    console.error('Erro ao analisar texto:', error);
+    res.status(500).json({ erro: 'Erro ao processar análise. Tente novamente.' });
   }
 });
 
-// FEEDBACK
-app.post('/api/feedback/:id', async (req, res) => {
+// REGISTRAR FEEDBACK
+app.post('/api/feedback', rateLimit, async (req, res) => {
   try {
-    const { avaliacaoCorreta, observacoes } = req.body;
-    const { id } = req.params;
+    const { id, avaliacaoCorreta, observacoes } = req.body;
 
-    if (typeof avaliacaoCorreta !== 'boolean') {
-      return res.status(400).json({ erro: 'avaliacaoCorreta deve ser true ou false.' });
+    if (!id || typeof avaliacaoCorreta !== 'boolean') {
+      return res.status(400).json({ erro: 'Dados inválidos.' });
     }
 
     const analise = await Analise.findByIdAndUpdate(
       id,
-      { feedback: { avaliacaoCorreta, observacoes: observacoes || '', dataFeedback: new Date() } },
+      {
+        feedback: {
+          avaliacaoCorreta,
+          observacoes: observacoes || '',
+          dataFeedback: new Date()
+        }
+      },
       { new: true }
     );
 
     if (!analise) return res.status(404).json({ erro: 'Análise não encontrada.' });
 
-    console.log('Feedback salvo. id:', id, '| correto:', avaliacaoCorreta);
-    res.json({ sucesso: true });
-
+    res.json({ ok: true, analise });
   } catch (error) {
-    console.error('Erro ao salvar feedback:', error);
-    res.status(500).json({ erro: 'Erro ao salvar feedback.' });
+    console.error('Erro ao registrar feedback:', error);
+    res.status(500).json({ erro: 'Erro ao registrar feedback.' });
   }
 });
 
-// ESTATÍSTICAS
-app.get('/api/estatisticas', async (req, res) => {
-  try {
-    const totalAnalises = await Analise.countDocuments();
-    const analisesPorRisco = await Analise.aggregate([
-      { $group: { _id: '$risco', quantidade: { $sum: 1 } } }
-    ]);
-    const analisesComFeedback = await Analise.countDocuments({ 'feedback.avaliacaoCorreta': { $exists: true } });
-    const feedbackCorretos = await Analise.countDocuments({ 'feedback.avaliacaoCorreta': true });
-    const taxaAcerto = analisesComFeedback > 0
-      ? parseFloat(((feedbackCorretos / analisesComFeedback) * 100).toFixed(2))
-      : 0;
-
-    res.json({ totalAnalises, analisesComFeedback, feedbackCorretos, taxaAcerto, porRisco: analisesPorRisco });
-
-  } catch (error) {
-    console.error('Erro nas estatísticas:', error);
-    res.status(500).json({ erro: 'Erro ao obter estatísticas.' });
-  }
-});
-
-// ✨ NOVO: MIDDLEWARE DE AUTENTICAÇÃO PARA FEEDBACKS
+// Middleware para autenticação de feedbacks
 function autenticarFeedbacks(req, res, next) {
-  const senha = req.query.senha || req.headers['x-senha'];
+  const senha = req.query.senha || req.headers['x-feedback-password'];
   const senhaCorreta = process.env.FEEDBACK_PASSWORD || 'veriTexto2026';
   
   if (senha !== senhaCorreta) {
