@@ -476,9 +476,10 @@ app.get('/api/estatisticas', async (req, res) => {
   }
 });
 // REGISTRAR FEEDBACK
-app.post('/api/feedback', rateLimit, async (req, res) => {
+app.post('/api/feedback/:id', rateLimit, async (req, res) => {
   try {
-    const { id, avaliacaoCorreta, observacoes } = req.body;
+    const { id } = req.params;
+    const { avaliacaoCorreta, observacoes } = req.body;
 
     if (!id || typeof avaliacaoCorreta !== 'boolean') {
       return res.status(400).json({ erro: 'Dados inválidos.' });
