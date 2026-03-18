@@ -677,6 +677,158 @@
                 font-size: 1.2em;
             }
         }
+
+        /* ── Tipo badge ── */
+        .tipo-badge {
+            display: inline-block;
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 3px 10px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            background: rgba(0,0,0,0.06);
+            color: var(--text-light);
+        }
+        body.dark-mode .tipo-badge { background: rgba(255,255,255,0.08); color: #a0a0b0; }
+
+        /* ── Confiabilidade badge ── */
+        .confianca-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8em;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+        .confianca-dot {
+            width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+        }
+        .confianca-alta  { background: rgba(16,185,129,0.12); color: #059669; }
+        .confianca-alta  .confianca-dot { background: #059669; }
+        .confianca-media { background: rgba(245,158,11,0.12); color: #d97706; }
+        .confianca-media .confianca-dot { background: #d97706; }
+        .confianca-baixa { background: rgba(239,68,68,0.12);  color: #dc2626; }
+        .confianca-baixa .confianca-dot { background: #dc2626; }
+
+        body.dark-mode .confianca-alta  { background: rgba(16,185,129,0.2); }
+        body.dark-mode .confianca-media { background: rgba(245,158,11,0.2); }
+        body.dark-mode .confianca-baixa { background: rgba(239,68,68,0.2);  }
+
+        /* ── Progress bar ── */
+        .progress-wrap {
+            margin: 16px 0 0;
+        }
+        .progress-track {
+            background: #e2e8f0;
+            border-radius: 4px;
+            height: 8px;
+            overflow: hidden;
+        }
+        body.dark-mode .progress-track { background: #3a3a4e; }
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.8s cubic-bezier(.4,0,.2,1);
+        }
+        .progress-fill.risk-low    { background: var(--success); }
+        .progress-fill.risk-medium { background: var(--warning); }
+        .progress-fill.risk-high   { background: var(--danger); }
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.78em;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        /* ── Fatores ── */
+        .fatores-list { margin-top: 4px; }
+        .fator-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 6px 0;
+            font-size: 0.88em;
+        }
+        .fator-desc { flex: 1; color: var(--text); }
+        .fator-peso {
+            font-weight: 700;
+            font-size: 0.82em;
+            color: var(--danger);
+            min-width: 36px;
+            text-align: right;
+        }
+        .fator-bar-track {
+            width: 80px; height: 4px;
+            background: #e2e8f0; border-radius: 2px; overflow: hidden; flex-shrink: 0;
+        }
+        body.dark-mode .fator-bar-track { background: #3a3a4e; }
+        .fator-bar-fill {
+            height: 100%; background: var(--danger);
+            border-radius: 2px;
+            transition: width 0.6s ease;
+        }
+
+        /* ── Fontes sugeridas ── */
+        .fontes-wrap {
+            margin-top: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .fonte-btn {
+            font-size: 0.82em;
+            padding: 5px 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--light);
+            color: var(--text);
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+        .fonte-btn:hover { background: var(--border); }
+        body.dark-mode .fonte-btn { background: #3a3a4e; border-color: #4a4a5e; color: #e0e0e0; }
+        body.dark-mode .fonte-btn:hover { background: #4a4a5e; }
+
+        /* ── Feedback melhorado ── */
+        .feedback-obs {
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.85em;
+            resize: none;
+            height: 60px;
+            background: var(--light);
+            color: var(--text);
+            display: none;
+        }
+        .feedback-obs.show { display: block; }
+        body.dark-mode .feedback-obs { background: #3a3a4e; border-color: #4a4a5e; color: #e0e0e0; }
+
+        .feedback-send {
+            margin-top: 6px;
+            padding: 6px 14px;
+            font-size: 0.82em;
+            font-weight: 600;
+            border: 1px solid var(--primary);
+            border-radius: 6px;
+            background: none;
+            color: var(--primary);
+            cursor: pointer;
+            display: none;
+        }
+        .feedback-send.show { display: inline-block; }
+        .feedback-send:hover { background: var(--primary); color: white; }
     </style>
 </head>
 <body>
@@ -699,7 +851,7 @@
         <div id="analise" class="tab-content active">
             <div class="card">
                 <div class="disclaimer-box" id="disclaimerBox">
-                    <strong> IMPORTANTE:</strong><br>
+                    <strong>Atenção:</strong><br>
                     Este sistema detecta <strong>sinais de possível desinformação</strong>, não a verdade absoluta.
                     <br><br>
                     Sempre consulte sites confiáveis para garantir a veracidade das informações. 
@@ -753,33 +905,59 @@
                             <span id="riskPercentage" class="risk-percentage">0%</span>
                             <span class="risk-label">RISCO</span>
                         </div>
-                        <div>
+                        <div style="flex:1; min-width:0;">
+                            <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+                                <span class="tipo-badge" id="tipoBadge" style="display:none"></span>
+                                <span class="confianca-badge" id="confiancaBadge" style="display:none">
+                                    <span class="confianca-dot" id="confiancaDot"></span>
+                                    <span id="confiancaLabel"></span>
+                                </span>
+                            </div>
                             <h2 id="riskTitle">Analisando...</h2>
                             <p id="riskDescription">Aguarde...</p>
+                            <div class="progress-wrap">
+                                <div class="progress-track">
+                                    <div class="progress-fill" id="progressFill"></div>
+                                </div>
+                                <div class="progress-label">
+                                    <span>0%</span>
+                                    <span id="progressPct">0%</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div style="margin-top: 24px;">
-                        <h3 class="section-title"> Sinais Identificados</h3>
+                        <h3 class="section-title">Sinais Identificados</h3>
                         <div id="signalsContainer"></div>
                     </div>
 
+                    <div style="margin-top: 20px;" id="fatoresSection" style="display:none">
+                        <h3 class="section-title">Peso dos Fatores</h3>
+                        <div class="fatores-list" id="fatoresContainer"></div>
+                    </div>
+
                     <div class="info-box">
-                        <h4> Análise Detalhada</h4>
+                        <h4>Análise Detalhada</h4>
                         <p id="explanation"></p>
                     </div>
 
                     <div class="info-box">
-                        <h4> Recomendação</h4>
+                        <h4>Recomendação</h4>
                         <p id="recommendation"></p>
+                        <div class="fontes-wrap" id="fontesWrap" style="display:none"></div>
                     </div>
 
                     <div class="copy-row">
-                        <div class="feedback-row" id="feedbackRow">
-                            <span class="feedback-label">Essa análise foi útil?</span>
-                            <button class="btn-feedback btn-yes" id="btnSim" onclick="enviarFeedback(true)">Sim</button>
-                            <button class="btn-feedback btn-no" id="btnNao" onclick="enviarFeedback(false)">Não</button>
-                            <span class="feedback-msg" id="feedbackMsg"></span>
+                        <div id="feedbackRow">
+                            <div class="feedback-row">
+                                <span class="feedback-label">Análise correta?</span>
+                                <button class="btn-feedback btn-yes" id="btnSim" onclick="selecionarFeedback(true)">👍 Correta</button>
+                                <button class="btn-feedback btn-no" id="btnNao" onclick="selecionarFeedback(false)">👎 Errada</button>
+                                <span class="feedback-msg" id="feedbackMsg"></span>
+                            </div>
+                            <textarea class="feedback-obs" id="feedbackObs" placeholder="Por quê? (opcional)"></textarea>
+                            <button class="feedback-send" id="feedbackSend" onclick="enviarFeedback()">Enviar feedback</button>
                         </div>
                         <button class="btn-copy" id="btnCopiar" onclick="copiarResultado()">Copiar resultado</button>
                     </div>
@@ -797,7 +975,7 @@
         </div>
     </div>
 
-    <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Alternar modo escuro">DARK</button>
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()" title="Alternar modo escuro"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></button>
 
     <script>
         const API_URL = window.location.origin + '/api';
@@ -921,56 +1099,157 @@
         }
 
         function mostrarResultados(resultado) {
-            const riskBadge = document.getElementById('riskBadge');
-            const riskTitle = document.getElementById('riskTitle');
+            const riskBadge       = document.getElementById('riskBadge');
+            const riskTitle       = document.getElementById('riskTitle');
             const riskDescription = document.getElementById('riskDescription');
-            const riskPercentage = document.getElementById('riskPercentage');
-            const signalsContainer = document.getElementById('signalsContainer');
-            const explanation = document.getElementById('explanation');
-            const recommendation = document.getElementById('recommendation');
+            const riskPercentage  = document.getElementById('riskPercentage');
+            const signalsContainer= document.getElementById('signalsContainer');
+            const explanation     = document.getElementById('explanation');
+            const recommendation  = document.getElementById('recommendation');
 
             const riscoNormalizado = normalizarRisco(resultado.risco);
-            const percentual = obterPercentual(resultado);
+            const percentual       = obterPercentual(resultado);
 
+            // ── Risk badge ──
             riskBadge.className = 'risk-badge';
-
             if (riscoNormalizado === 'low') {
                 riskBadge.classList.add('risk-low');
-                riskTitle.textContent = 'RISCO BAIXO';
+                riskTitle.textContent       = 'RISCO BAIXO';
                 riskDescription.textContent = 'Poucos sinais de desinformação.';
             } else if (riscoNormalizado === 'medium') {
                 riskBadge.classList.add('risk-medium');
-                riskTitle.textContent = 'RISCO MÉDIO';
+                riskTitle.textContent       = 'RISCO MÉDIO';
                 riskDescription.textContent = 'Contém alguns sinais. Verifique em fontes confiáveis.';
             } else {
                 riskBadge.classList.add('risk-high');
-                riskTitle.textContent = 'RISCO ALTO';
+                riskTitle.textContent       = 'RISCO ALTO';
                 riskDescription.textContent = 'Vários sinais de desinformação. Não compartilhe sem verificar.';
             }
 
             riskPercentage.textContent = `${percentual}%`;
 
-            if (resultado.sinais && Array.isArray(resultado.sinais) && resultado.sinais.length > 0) {
-                signalsContainer.innerHTML = resultado.sinais
-                    .map((sinal, i) => `<div class="signal-item" style="animation-delay:${i * 0.07}s">${sinal}</div>`)
-                    .join('');
+            // ── Progress bar ──
+            const pFill = document.getElementById('progressFill');
+            const pPct  = document.getElementById('progressPct');
+            pFill.className = 'progress-fill';
+            pFill.classList.add(riscoNormalizado === 'low' ? 'risk-low' : riscoNormalizado === 'medium' ? 'risk-medium' : 'risk-high');
+            pFill.style.width = '0%';
+            pPct.textContent  = `${percentual}%`;
+            setTimeout(() => { pFill.style.width = `${percentual}%`; }, 80);
+
+            // ── Tipo badge ──
+            const tipoBadge = document.getElementById('tipoBadge');
+            if (resultado.tipo) {
+                tipoBadge.textContent     = resultado.tipo;
+                tipoBadge.style.display   = 'inline-block';
             } else {
-                signalsContainer.innerHTML = '<div class="signal-item">Nenhum sinal específico foi listado.</div>';
+                tipoBadge.style.display   = 'none';
             }
 
-            explanation.textContent = resultado.explicacao || 'Sem explicação disponível.';
-            recommendation.textContent = resultado.recomendacao || 'Verifique a informação em fontes confiáveis antes de compartilhar.';
+            // ── Confiabilidade ──
+            const confiancaBadge = document.getElementById('confiancaBadge');
+            const confiancaDot   = document.getElementById('confiancaDot');
+            const confiancaLabel = document.getElementById('confiancaLabel');
+            const conf = resultado.confiabilidade || 'media';
+            const confMap = { alta: 'Alta confiança', media: 'Média confiança', baixa: 'Baixa confiança' };
+            confiancaBadge.className     = `confianca-badge confianca-${conf}`;
+            confiancaLabel.textContent   = confMap[conf] || 'Média confiança';
+            confiancaBadge.style.display = 'inline-flex';
 
+            // ── Sinais ──
+            if (resultado.sinais && resultado.sinais.length > 0) {
+                signalsContainer.innerHTML = resultado.sinais
+                    .map((s, i) => `<div class="signal-item" style="animation-delay:${i * 0.07}s">${s}</div>`)
+                    .join('');
+            } else {
+                signalsContainer.innerHTML = '<div class="signal-item">Nenhum sinal específico identificado.</div>';
+            }
+
+            // ── Fatores ──
+            const fatoresSection   = document.getElementById('fatoresSection');
+            const fatoresContainer = document.getElementById('fatoresContainer');
+            if (resultado.fatores && resultado.fatores.length > 0) {
+                fatoresSection.style.display = 'block';
+                fatoresContainer.innerHTML   = resultado.fatores.map(f => `
+                    <div class="fator-item">
+                        <span class="fator-desc">${f.descricao}</span>
+                        <div class="fator-bar-track">
+                            <div class="fator-bar-fill" style="width:${Math.min(f.peso, 100)}%"></div>
+                        </div>
+                        <span class="fator-peso">+${f.peso}%</span>
+                    </div>`).join('');
+            } else {
+                fatoresSection.style.display = 'none';
+            }
+
+            // ── Explicação e recomendação ──
+            explanation.textContent    = resultado.explicacao    || 'Sem explicação disponível.';
+            recommendation.textContent = resultado.recomendacao  || 'Verifique a informação em fontes confiáveis.';
+
+            // ── Fontes sugeridas ──
+            const fontesWrap = document.getElementById('fontesWrap');
+            if (resultado.fontesSugeridas && resultado.fontesSugeridas.length > 0) {
+                fontesWrap.style.display = 'flex';
+                fontesWrap.innerHTML     = resultado.fontesSugeridas.map(f => {
+                    const q = encodeURIComponent(f + ' ' + document.getElementById('texto').value.substring(0, 60));
+                    return `<a class="fonte-btn" href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener">${f}</a>`;
+                }).join('');
+            } else {
+                fontesWrap.style.display = 'none';
+            }
+
+            // ── Mostrar resultados ──
             const r = document.getElementById('resultados');
             r.style.display = 'block';
             r.classList.add('visible');
 
-            // Reset feedback
+            // ── Reset feedback ──
             document.getElementById('feedbackMsg').textContent = '';
-            document.getElementById('btnSim').className = 'btn-feedback btn-yes';
-            document.getElementById('btnNao').className = 'btn-feedback btn-no';
-            document.getElementById('btnSim').disabled = false;
-            document.getElementById('btnNao').disabled = false;
+            document.getElementById('feedbackObs').value       = '';
+            document.getElementById('feedbackObs').classList.remove('show');
+            document.getElementById('feedbackSend').classList.remove('show');
+            document.getElementById('btnSim').className        = 'btn-feedback btn-yes';
+            document.getElementById('btnNao').className        = 'btn-feedback btn-no';
+            document.getElementById('btnSim').disabled         = false;
+            document.getElementById('btnNao').disabled         = false;
+        }
+
+        let feedbackSelecionado = null;
+
+        function selecionarFeedback(correta) {
+            feedbackSelecionado = correta;
+            document.getElementById('btnSim').className = 'btn-feedback btn-yes' + (correta  ? ' selected-yes' : '');
+            document.getElementById('btnNao').className = 'btn-feedback btn-no'  + (!correta ? ' selected-no'  : '');
+            document.getElementById('feedbackObs').classList.add('show');
+            document.getElementById('feedbackSend').classList.add('show');
+        }
+
+        async function enviarFeedback() {
+            if (feedbackSelecionado === null || !analiseAtualId) return;
+
+            const obs     = document.getElementById('feedbackObs').value.trim();
+            const msg     = document.getElementById('feedbackMsg');
+            const sendBtn = document.getElementById('feedbackSend');
+
+            sendBtn.disabled = true;
+            document.getElementById('btnSim').disabled = true;
+            document.getElementById('btnNao').disabled = true;
+
+            try {
+                await fetch(`${API_URL}/feedback/${analiseAtualId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ avaliacaoCorreta: feedbackSelecionado, observacoes: obs })
+                });
+                msg.textContent = 'Obrigado pelo feedback!';
+                document.getElementById('feedbackObs').classList.remove('show');
+                sendBtn.classList.remove('show');
+            } catch (e) {
+                msg.textContent  = 'Erro ao enviar.';
+                sendBtn.disabled = false;
+                document.getElementById('btnSim').disabled = false;
+                document.getElementById('btnNao').disabled = false;
+            }
         }
 
         function limparFormulario() {
@@ -1043,14 +1322,14 @@
             localStorage.setItem('darkMode', isDarkMode ? 'true' : 'false');
 
             const btn = document.querySelector('.dark-mode-toggle');
-            btn.textContent = isDarkMode ? 'LIGHT' : 'DARK';
+            btn.innerHTML = isDarkMode ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>` : `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
         }
 
         window.addEventListener('load', () => {
             const isDarkMode = localStorage.getItem('darkMode') === 'true';
             if (isDarkMode) {
                 document.body.classList.add('dark-mode');
-                document.querySelector('.dark-mode-toggle').textContent = 'LIGHT';
+                document.querySelector('.dark-mode-toggle').innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
             }
         });
 
@@ -1075,32 +1354,6 @@
             if (disclaimer) disclaimer.style.display = 'none';
         }
 
-
-        async function enviarFeedback(correta) {
-            if (!analiseAtualId) return;
-
-            const btnSim = document.getElementById('btnSim');
-            const btnNao = document.getElementById('btnNao');
-            const msg = document.getElementById('feedbackMsg');
-
-            btnSim.disabled = true;
-            btnNao.disabled = true;
-            btnSim.className = 'btn-feedback btn-yes' + (correta ? ' selected-yes' : '');
-            btnNao.className = 'btn-feedback btn-no' + (!correta ? ' selected-no' : '');
-
-            try {
-                await fetch(`${API_URL}/feedback/${analiseAtualId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ avaliacaoCorreta: correta })
-                });
-                msg.textContent = 'Obrigado pelo feedback!';
-            } catch (e) {
-                msg.textContent = 'Erro ao enviar feedback.';
-                btnSim.disabled = false;
-                btnNao.disabled = false;
-            }
-        }
 
         function copiarResultado() {
             const titulo = document.getElementById('riskTitle').textContent;
