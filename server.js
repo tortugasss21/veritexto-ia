@@ -68,8 +68,8 @@ const analiseSchema = new mongoose.Schema({
 const Analise = mongoose.model('Analise', analiseSchema);
 
 // ===================== GOOGLE GEMINI API =====================
+// ✅ CORRIGIDO: Instancia apenas o genAI aqui; o model é criado por chamada com systemInstruction
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
 // ===================== FUNÇÕES AUXILIARES =====================
 function limparJsonString(texto) {
@@ -97,24 +97,20 @@ function normalizarConfiabilidade(v) {
 function normalizarResultado(resultado, textoOriginal = '') {
   const risco = normalizarRisco(resultado?.risco);
 
-  // ✨ NOVO: Contar sinais e fatores reais
   const sinaisArray = Array.isArray(resultado?.sinais) ? resultado.sinais : [];
   const fatoresArray = Array.isArray(resultado?.fatores) ? resultado.fatores : [];
-  
+
   const sinaisCount = sinaisArray.length;
   const fatoresCount = fatoresArray.length;
 
   let percentualRisco = Number(resultado?.percentualRisco);
-  
-  // ✨ NOVO: Calcular percentual baseado em sinais reais
+
   if (Number.isNaN(percentualRisco) || !Number.isFinite(percentualRisco)) {
-    // Cada sinal = +15%, cada fator = +8%
-    // Máximo: 4 sinais (60%) + 3 fatores (24%) = 84% (com buffer para 100%)
     const percentualPorSinais = sinaisCount * 15;
     const percentualPorFatores = Math.min(fatoresCount, 3) * 8;
     percentualRisco = Math.min(100, percentualPorSinais + percentualPorFatores);
   }
-  
+
   percentualRisco = Math.max(0, Math.min(100, Math.round(percentualRisco)));
 
   const confiabilidade = normalizarConfiabilidade(resultado?.confiabilidade);
@@ -248,10 +244,14 @@ RESPOSTA ESPERADA (JSON):
 
     const userPrompt = `Analise o seguinte texto quanto a possíveis sinais de desinformação:\n\n"${texto}"`;
 
-    const result = await model.generateContent([
-      { text: systemPrompt },
-      { text: userPrompt }
-    ]);
+    // ✅ CORRIGIDO: model criado com systemInstruction por chamada
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      systemInstruction: systemPrompt,
+    });
+
+    // ✅ CORRIGIDO: apenas o userPrompt é passado para generateContent
+    const result = await model.generateContent(userPrompt);
 
     const respostaCompleta = result.response.text();
     const analiseResultado = extrairResultadoDaResposta(respostaCompleta, texto);
@@ -262,7 +262,10 @@ RESPOSTA ESPERADA (JSON):
 
     res.json({ ...analiseResultado, _id: analise._id });
   } catch (error) {
-    console.error('Erro ao analisar texto:', error);
+    // Log detalhado para facilitar debug no Render
+    console.error('Erro ao analisar texto:', error.message || error);
+    console.error('Status:', error.status);
+    console.error('Detalhes:', JSON.stringify(error?.errorDetails || error?.details || {}));
     res.status(500).json({ erro: 'Erro ao processar análise. Tente novamente.' });
   }
 });
@@ -301,7 +304,7 @@ app.post('/api/feedback', rateLimit, async (req, res) => {
 function autenticarFeedbacks(req, res, next) {
   const senha = req.query.senha || req.headers['x-feedback-password'];
   const senhaCorreta = process.env.FEEDBACK_PASSWORD || 'veriTexto2026';
-  
+
   if (senha !== senhaCorreta) {
     return res.status(401).json({ erro: 'Acesso negado. Senha incorreta.' });
   }
@@ -320,11 +323,11 @@ app.get('/api/analise/:id', async (req, res) => {
   }
 });
 
-// ✨ NOVO: LISTAR FEEDBACKS COM AUTENTICAÇÃO
+// LISTAR FEEDBACKS COM AUTENTICAÇÃO
 app.get('/api/feedbacks', autenticarFeedbacks, async (req, res) => {
   try {
     const { correto, skip = 0, limit = 20 } = req.query;
-    
+
     let filtro = { 'feedback': { $exists: true } };
     if (correto === 'true') filtro['feedback.avaliacaoCorreta'] = true;
     if (correto === 'false') filtro['feedback.avaliacaoCorreta'] = false;
@@ -335,8 +338,8 @@ app.get('/api/feedbacks', autenticarFeedbacks, async (req, res) => {
       .skip(parseInt(skip))
       .limit(parseInt(limit));
 
-    res.json({ 
-      total, 
+    res.json({
+      total,
       feedbacks: feedbacks.map(f => ({
         _id: f._id,
         texto: f.texto.substring(0, 100) + '...',
@@ -355,7 +358,7 @@ app.get('/api/feedbacks', autenticarFeedbacks, async (req, res) => {
   }
 });
 
-// ✨ NOVO: ESTATÍSTICAS DETALHADAS DE FEEDBACKS COM AUTENTICAÇÃO
+// ESTATÍSTICAS DETALHADAS DE FEEDBACKS COM AUTENTICAÇÃO
 app.get('/api/feedbacks/stats', autenticarFeedbacks, async (req, res) => {
   try {
     const totalAnalises = await Analise.countDocuments();
@@ -363,10 +366,10 @@ app.get('/api/feedbacks/stats', autenticarFeedbacks, async (req, res) => {
     const feedbackCorretos = await Analise.countDocuments({ 'feedback.avaliacaoCorreta': true });
     const feedbackErrados = await Analise.countDocuments({ 'feedback.avaliacaoCorreta': false });
 
-    // Acurácia por tipo de risco
     const acuraciasPorRisco = await Analise.aggregate([
       { $match: { 'feedback.avaliacaoCorreta': { $exists: true } } },
-      { $group: {
+      {
+        $group: {
           _id: '$risco',
           total: { $sum: 1 },
           corretos: { $sum: { $cond: ['$feedback.avaliacaoCorreta', 1, 0] } }
@@ -374,7 +377,6 @@ app.get('/api/feedbacks/stats', autenticarFeedbacks, async (req, res) => {
       }
     ]);
 
-    // Sinais mais comuns nas análises erradas
     const sinaisErrados = await Analise.aggregate([
       { $match: { 'feedback.avaliacaoCorreta': false } },
       { $unwind: '$sinais' },
@@ -407,15 +409,14 @@ app.get('/api/feedbacks/stats', autenticarFeedbacks, async (req, res) => {
   }
 });
 
-// ✨ NOVO: PADRÕES DE ERRO DETECTADOS COM AUTENTICAÇÃO
+// PADRÕES DE ERRO DETECTADOS COM AUTENTICAÇÃO
 app.get('/api/feedbacks/patterns', autenticarFeedbacks, async (req, res) => {
   try {
-    // Análises que foram marcadas como erradas
     const erros = await Analise.find({ 'feedback.avaliacaoCorreta': false });
 
     const patterns = {
-      falsoPositivo: [], // Risco alto mas usuário disse errado
-      falsoNegativo: [], // Risco baixo mas usuário disse errado
+      falsoPositivo: [],
+      falsoNegativo: [],
       riscosComMaiorErro: {},
       textosMaisErrados: []
     };
@@ -437,7 +438,6 @@ app.get('/api/feedbacks/patterns', autenticarFeedbacks, async (req, res) => {
         });
       }
 
-      // Contar erros por risco
       if (!patterns.riscosComMaiorErro[erro.risco]) {
         patterns.riscosComMaiorErro[erro.risco] = 0;
       }
@@ -459,12 +459,13 @@ app.get('/api/feedbacks/patterns', autenticarFeedbacks, async (req, res) => {
   }
 });
 
-// ✨ NOVO: SUGESTÕES DE MELHORIA BASEADO EM ERROS COM AUTENTICAÇÃO
+// SUGESTÕES DE MELHORIA BASEADO EM ERROS COM AUTENTICAÇÃO
 app.get('/api/feedbacks/suggestions', autenticarFeedbacks, async (req, res) => {
   try {
     const patterns = await Analise.aggregate([
       { $match: { 'feedback.avaliacaoCorreta': false } },
-      { $group: {
+      {
+        $group: {
           _id: null,
           totalErros: { $sum: 1 },
           errosAlto: { $sum: { $cond: [{ $eq: ['$risco', 'alto'] }, 1, 0] } },
@@ -479,7 +480,7 @@ app.get('/api/feedbacks/suggestions', autenticarFeedbacks, async (req, res) => {
 
     if (patterns.length > 0) {
       const p = patterns[0];
-      
+
       if (p.errosAlto > p.errosMedio && p.errosAlto > p.errosBaixo) {
         suggestions.push({
           tipo: 'FALSO POSITIVO',
