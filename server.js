@@ -170,27 +170,49 @@ app.post('/api/analisar', rateLimit, async (req, res) => {
 
     console.log('Analisando texto...');
 
+    const dataHoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
     const completion = await client.chat.completions.create({
       model: AI_MODEL,
       messages: [
         {
           role: 'system',
-          content: `Você é um especialista em análise de desinformação. Responda somente em JSON válido. A data de hoje é ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}. Não considere datas passadas como "datas futuras".`
+          content: `Você é um especialista em verificação de fatos e análise de desinformação. Responda somente em JSON válido.
+
+A data de hoje é ${dataHoje}. Qualquer data anterior a hoje é passada — nunca a trate como "data futura".
+
+Ao analisar um texto, avalie os seguintes critérios objetivamente:
+- Linguagem alarmista, sensacionalista ou apelos emocionais excessivos ("URGENTE!", "compartilhe antes que apaguem")
+- Ausência de fontes concretas, nomes de especialistas ou instituições verificáveis
+- Afirmações absolutas sem evidências ("cientistas provaram", "o governo esconde")
+- Inconsistências internas ou dados que contradizem fatos conhecidos
+- Contexto manipulado (imagem/fato real usado fora de contexto)
+- Erros gramaticais excessivos ou formatação típica de spam
+
+Textos com fontes verificáveis, linguagem neutra e dados concretos devem ter risco BAIXO, mesmo que o assunto seja polêmico.
+Não invente sinais que não estão presentes no texto.`
         },
         {
           role: 'user',
-          content: `Analise o texto abaixo e identifique possíveis sinais de fake news.
-
-Responda APENAS em JSON válido, sem markdown, sem crases e sem texto extra.
-
-Formato obrigatório:
-{
-  "risco": "baixo, medio ou alto",
-  "percentualRisco": número entre 0 e 100,
-  "sinais": ["sinal 1", "sinal 2"],
-  "explicacao": "explicação clara",
-  "recomendacao": "recomendação"
-}
+          content: `Analise este texto e retorne JSON:
+"URGENTE!! Vacinas causam autismo, estudo secreto do governo prova! Compartilhe antes que apaguem essa verdade!"`
+        },
+        {
+          role: 'assistant',
+          content: `{"risco":"alto","percentualRisco":92,"sinais":["Linguagem alarmista: 'URGENTE!!' e apelo para compartilhar","Alegação de 'estudo secreto' sem fonte verificável","Afirmação científica falsa amplamente refutada","Pressão emocional para viralizar antes de 'apagar'"],"explicacao":"O texto usa múltiplos marcadores clássicos de desinformação: urgência artificial, teoria conspiratória de supressão governamental e uma afirmação médica falsa. A relação vacinas-autismo foi amplamente estudada e refutada pela comunidade científica.","recomendacao":"Não compartilhe. Consulte fontes como OMS, Fiocruz ou Ministério da Saúde para informações sobre vacinas."}`
+        },
+        {
+          role: 'user',
+          content: `Analise este texto e retorne JSON:
+"Segundo relatório divulgado pelo IBGE em março de 2025, o Brasil registrou crescimento de 2,1% no PIB no último trimestre, impulsionado pelo setor agrícola."`
+        },
+        {
+          role: 'assistant',
+          content: `{"risco":"baixo","percentualRisco":8,"sinais":[],"explicacao":"O texto cita uma fonte verificável (IBGE), apresenta dados específicos (2,1%), indica período (março de 2025) e setor responsável. A linguagem é neutra e informativa, sem apelos emocionais ou afirmações absolutas.","recomendacao":"O texto apresenta características de informação jornalística confiável. Você pode verificar diretamente no site do IBGE para confirmar os dados."}`
+        },
+        {
+          role: 'user',
+          content: `Analise este texto e retorne JSON. Responda APENAS com o JSON, sem markdown, sem crases e sem texto extra.
 
 Texto:
 "${texto}"`
@@ -203,7 +225,10 @@ Texto:
 
     const resultadoFinal = extrairResultadoDaResposta(respostaBruta, texto);
 
+    // Gera o ID antes de salvar para poder retornar ao frontend
+    const analiseId = new mongoose.Types.ObjectId();
     const analise = new Analise({
+      _id: analiseId,
       texto: resultadoFinal.texto,
       risco: resultadoFinal.risco,
       percentualRisco: resultadoFinal.percentualRisco,
@@ -214,6 +239,7 @@ Texto:
 
     res.json({
       sucesso: true,
+      id: analiseId,
       risco: resultadoFinal.risco,
       percentualRisco: resultadoFinal.percentualRisco,
       sinais: resultadoFinal.sinais,
