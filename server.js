@@ -69,7 +69,7 @@ const Analise = mongoose.model('Analise', analiseSchema);
 
 // ===================== GOOGLE GEMINI API =====================
 // ✅ CORRIGIDO: apiVersion 'v1beta' necessário para gemini-2.0-flash no pacote 0.4.x
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY, { apiVersion: 'v1beta' });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // ===================== FUNÇÕES AUXILIARES =====================
 function limparJsonString(texto) {
@@ -245,14 +245,17 @@ RESPOSTA ESPERADA (JSON):
     const userPrompt = `Analise o seguinte texto quanto a possíveis sinais de desinformação:\n\n"${texto}"`;
 
     // ✅ responseMimeType força JSON puro, sem texto extra
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash-lite',
-      systemInstruction: systemPrompt,
-      generationConfig: {
-        responseMimeType: 'application/json',
-        temperature: 0.2,
+    const model = genAI.getGenerativeModel(
+      {
+        model: 'gemini-2.5-flash-lite',
+        systemInstruction: systemPrompt,
+        generationConfig: {
+          responseMimeType: 'application/json',
+          temperature: 0.2,
+        },
       },
-    });
+      { apiVersion: 'v1beta' } // ✅ v1beta necessário para modelos gemini-2.5
+    );
 
     const result = await model.generateContent(userPrompt);
 
