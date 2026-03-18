@@ -921,7 +921,7 @@
 
         <div class="tabs">
             <button class="tab-button active" onclick="mudarAba('analise', this)"> Análise</button>
-            <button class="tab-button" id="tab-feedbacks-btn" onclick="verificarAutenticacaoFeedbacks(event)"> 🔒 Acesso</button>
+            <button class="tab-button" id="tab-feedbacks-btn" onclick="verificarAutenticacaoFeedbacks(event)">  Acesso</button>
             <button class="tab-button" onclick="mudarAba('estatisticas', this)"> Estatísticas</button>
         </div>
 
@@ -1099,7 +1099,7 @@
 
     <div class="auth-modal" id="authModal">
         <div class="auth-modal-content">
-            <h2>🔒 Acesso Restrito</h2>
+            <h2> Acesso Restrito</h2>
             <p>Digite a senha para acessar o dashboard de feedbacks</p>
             <input type="password" class="auth-input" id="authPassword" placeholder="Senha" onkeypress="if(event.key==='Enter') autenticarFeedbacks()">
             <div class="auth-modal-buttons">
@@ -1114,7 +1114,7 @@
             onclick="toggleDarkMode()" 
             title="Alternar tema (Tecla D)"
             aria-label="Alternar modo escuro">
-        <span id="darkModeEmoji">🌙</span>
+        <span id="darkModeEmoji">Dark</span>
     </button>
 
     <script>
@@ -1633,16 +1633,16 @@
 
             // ✨ NOVO: Mudar emoji
             const emoji = document.getElementById('darkModeEmoji');
-            emoji.textContent = isDarkMode ? '☀️' : '🌙';
+            emoji.textContent = isDarkMode ? 'Light' : 'Dark';
         }
 
         window.addEventListener('load', () => {
             const isDarkMode = localStorage.getItem('darkMode') === 'true';
             if (isDarkMode) {
                 document.body.classList.add('dark-mode');
-                document.getElementById('darkModeEmoji').textContent = '☀️';
+                document.getElementById('darkModeEmoji').textContent = 'Light';
             } else {
-                document.getElementById('darkModeEmoji').textContent = '🌙';
+                document.getElementById('darkModeEmoji').textContent = 'Dark';
             }
         });
 
