@@ -189,8 +189,8 @@ app.post('/api/analisar', rateLimit, async (req, res) => {
       return res.status(400).json({ erro: 'O texto deve ter pelo menos 20 caracteres.' });
     }
 
-    if (texto.trim().length > 3000) {
-      return res.status(400).json({ erro: 'O texto não pode ultrapassar 3000 caracteres.' });
+    if (texto.trim().length > 10000) {
+      return res.status(400).json({ erro: 'O texto não pode ultrapassar 10.000 caracteres.' });
     }
 
     const dataHoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
