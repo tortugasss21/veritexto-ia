@@ -392,6 +392,204 @@ app.get('/api/analise/:id', async (req, res) => {
   }
 });
 
+// ✨ NOVO: LISTAR FEEDBACKS COM FILTROS
+app.get('/api/feedbacks', async (req, res) => {
+  try {
+    const { correto, skip = 0, limit = 20 } = req.query;
+    
+    let filtro = { 'feedback': { $exists: true } };
+    if (correto === 'true') filtro['feedback.avaliacaoCorreta'] = true;
+    if (correto === 'false') filtro['feedback.avaliacaoCorreta'] = false;
+
+    const total = await Analise.countDocuments(filtro);
+    const feedbacks = await Analise.find(filtro)
+      .sort({ 'feedback.dataFeedback': -1 })
+      .skip(parseInt(skip))
+      .limit(parseInt(limit));
+
+    res.json({ 
+      total, 
+      feedbacks: feedbacks.map(f => ({
+        _id: f._id,
+        texto: f.texto.substring(0, 100) + '...',
+        textoCompleto: f.texto,
+        risco: f.risco,
+        percentualRisco: f.percentualRisco,
+        sinais: f.sinais,
+        avaliacaoCorreta: f.feedback.avaliacaoCorreta,
+        observacoes: f.feedback.observacoes,
+        dataFeedback: f.feedback.dataFeedback
+      }))
+    });
+  } catch (error) {
+    console.error('Erro ao listar feedbacks:', error);
+    res.status(500).json({ erro: 'Erro ao obter feedbacks.' });
+  }
+});
+
+// ✨ NOVO: ESTATÍSTICAS DETALHADAS DE FEEDBACKS
+app.get('/api/feedbacks/stats', async (req, res) => {
+  try {
+    const totalAnalises = await Analise.countDocuments();
+    const analisesComFeedback = await Analise.countDocuments({ 'feedback.avaliacaoCorreta': { $exists: true } });
+    const feedbackCorretos = await Analise.countDocuments({ 'feedback.avaliacaoCorreta': true });
+    const feedbackErrados = await Analise.countDocuments({ 'feedback.avaliacaoCorreta': false });
+
+    // Acurácia por tipo de risco
+    const acuraciasPorRisco = await Analise.aggregate([
+      { $match: { 'feedback.avaliacaoCorreta': { $exists: true } } },
+      { $group: {
+          _id: '$risco',
+          total: { $sum: 1 },
+          corretos: { $sum: { $cond: ['$feedback.avaliacaoCorreta', 1, 0] } }
+        }
+      }
+    ]);
+
+    // Sinais mais comuns nas análises erradas
+    const sinaisErrados = await Analise.aggregate([
+      { $match: { 'feedback.avaliacaoCorreta': false } },
+      { $unwind: '$sinais' },
+      { $group: { _id: '$sinais', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]);
+
+    const taxaAcerto = analisesComFeedback > 0
+      ? parseFloat(((feedbackCorretos / analisesComFeedback) * 100).toFixed(2))
+      : 0;
+
+    res.json({
+      totalAnalises,
+      analisesComFeedback,
+      feedbackCorretos,
+      feedbackErrados,
+      taxaAcerto,
+      acuraciasPorRisco: acuraciasPorRisco.map(a => ({
+        risco: a._id,
+        total: a.total,
+        corretos: a.corretos,
+        taxa: parseFloat(((a.corretos / a.total) * 100).toFixed(2))
+      })),
+      sinaisErrados
+    });
+  } catch (error) {
+    console.error('Erro ao obter stats de feedbacks:', error);
+    res.status(500).json({ erro: 'Erro ao obter estatísticas.' });
+  }
+});
+
+// ✨ NOVO: PADRÕES DE ERRO DETECTADOS
+app.get('/api/feedbacks/patterns', async (req, res) => {
+  try {
+    // Análises que foram marcadas como erradas
+    const erros = await Analise.find({ 'feedback.avaliacaoCorreta': false });
+
+    const patterns = {
+      falsoPositivo: [], // Risco alto mas usuário disse errado
+      falsoNegativo: [], // Risco baixo mas usuário disse errado
+      riscosComMaiorErro: {},
+      textosMaisErrados: []
+    };
+
+    erros.forEach(erro => {
+      if (erro.risco === 'alto') {
+        patterns.falsoPositivo.push({
+          texto: erro.texto.substring(0, 80),
+          risco: erro.risco,
+          percentual: erro.percentualRisco,
+          sinais: erro.sinais.length
+        });
+      } else {
+        patterns.falsoNegativo.push({
+          texto: erro.texto.substring(0, 80),
+          risco: erro.risco,
+          percentual: erro.percentualRisco,
+          sinais: erro.sinais.length
+        });
+      }
+
+      // Contar erros por risco
+      if (!patterns.riscosComMaiorErro[erro.risco]) {
+        patterns.riscosComMaiorErro[erro.risco] = 0;
+      }
+      patterns.riscosComMaiorErro[erro.risco]++;
+    });
+
+    patterns.textosMaisErrados = erros
+      .slice(0, 10)
+      .map(e => ({
+        texto: e.texto.substring(0, 100),
+        risco: e.risco,
+        observacao: e.feedback.observacoes
+      }));
+
+    res.json(patterns);
+  } catch (error) {
+    console.error('Erro ao analisar patterns:', error);
+    res.status(500).json({ erro: 'Erro ao analisar padrões.' });
+  }
+});
+
+// ✨ NOVO: SUGESTÕES DE MELHORIA BASEADO EM ERROS
+app.get('/api/feedbacks/suggestions', async (req, res) => {
+  try {
+    const patterns = await Analise.aggregate([
+      { $match: { 'feedback.avaliacaoCorreta': false } },
+      { $group: {
+          _id: null,
+          totalErros: { $sum: 1 },
+          errosAlto: { $sum: { $cond: [{ $eq: ['$risco', 'alto'] }, 1, 0] } },
+          errosMedio: { $sum: { $cond: [{ $eq: ['$risco', 'medio'] }, 1, 0] } },
+          errosBaixo: { $sum: { $cond: [{ $eq: ['$risco', 'baixo'] }, 1, 0] } },
+          sinaisMédios: { $avg: { $size: '$sinais' } }
+        }
+      }
+    ]);
+
+    const suggestions = [];
+
+    if (patterns.length > 0) {
+      const p = patterns[0];
+      
+      if (p.errosAlto > p.errosMedio && p.errosAlto > p.errosBaixo) {
+        suggestions.push({
+          tipo: 'FALSO POSITIVO',
+          problema: 'Sistema marca muitos textos como ALTO RISCO quando deveriam ser MÉDIO/BAIXO',
+          solucao: 'Aumentar o threshold de sinais necessários para classificar como ALTO',
+          impacto: `${p.errosAlto} erros deste tipo`
+        });
+      }
+
+      if (p.errosBaixo > p.errosMedio) {
+        suggestions.push({
+          tipo: 'FALSO NEGATIVO',
+          problema: 'Sistema marca textos com risco BAIXO quando têm sinais de desinformação',
+          solucao: 'Melhorar detecção de sinais sutis no prompt da IA',
+          impacto: `${p.errosBaixo} erros deste tipo`
+        });
+      }
+
+      if (p.sinaisMédios < 1.5 && p.totalErros > 5) {
+        suggestions.push({
+          tipo: 'SINAIS INSUFICIENTES',
+          problema: 'IA não está encontrando sinais suficientes para textos que têm desinformação',
+          solucao: 'Revisar prompt e exemplos do sistema para melhorar detecção',
+          impacto: `Média de ${p.sinaisMédios.toFixed(1)} sinais nos erros`
+        });
+      }
+    }
+
+    res.json({
+      sugestoes: suggestions.length > 0 ? suggestions : [{ info: 'Nenhum padrão detectado ainda. Colha mais feedbacks!' }],
+      totalErrosAnalisados: patterns[0]?.totalErros || 0
+    });
+  } catch (error) {
+    console.error('Erro ao gerar sugestões:', error);
+    res.status(500).json({ erro: 'Erro ao gerar sugestões.' });
+  }
+});
+
 // FRONTEND
 app.use(express.static('public'));
 app.get('/', (req, res) => res.sendFile(__dirname + '/public/index.html'));
