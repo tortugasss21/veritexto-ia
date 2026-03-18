@@ -71,7 +71,6 @@ const client = new OpenAI({
 });
 
 const AI_MODEL = process.env.AI_MODEL || 'openrouter/free';
-const AI_TIMEOUT_MS = 20000;
 
 // ===================== FUNÇÕES AUXILIARES =====================
 function limparJsonString(texto) {
@@ -171,11 +170,7 @@ app.post('/api/analisar', rateLimit, async (req, res) => {
 
     console.log('Analisando texto...');
 
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('A IA demorou demais para responder. Tente novamente.')), AI_TIMEOUT_MS)
-    );
-
-    const completionPromise = client.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: AI_MODEL,
       messages: [
         {
@@ -202,8 +197,6 @@ Texto:
         }
       ]
     });
-
-    const completion = await Promise.race([completionPromise, timeoutPromise]);
 
     const respostaBruta = completion?.choices?.[0]?.message?.content || '';
     console.log('Resposta bruta da IA:', respostaBruta);
