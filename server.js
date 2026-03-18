@@ -380,6 +380,17 @@ app.get('/api/estatisticas', async (req, res) => {
   }
 });
 
+// ✨ NOVO: MIDDLEWARE DE AUTENTICAÇÃO PARA FEEDBACKS
+function autenticarFeedbacks(req, res, next) {
+  const senha = req.query.senha || req.headers['x-senha'];
+  const senhaCorreta = process.env.FEEDBACK_PASSWORD || 'veriTexto2026';
+  
+  if (senha !== senhaCorreta) {
+    return res.status(401).json({ erro: 'Acesso negado. Senha incorreta.' });
+  }
+  next();
+}
+
 // BUSCAR ANÁLISE
 app.get('/api/analise/:id', async (req, res) => {
   try {
@@ -392,8 +403,8 @@ app.get('/api/analise/:id', async (req, res) => {
   }
 });
 
-// ✨ NOVO: LISTAR FEEDBACKS COM FILTROS
-app.get('/api/feedbacks', async (req, res) => {
+// ✨ NOVO: LISTAR FEEDBACKS COM AUTENTICAÇÃO
+app.get('/api/feedbacks', autenticarFeedbacks, async (req, res) => {
   try {
     const { correto, skip = 0, limit = 20 } = req.query;
     
@@ -427,8 +438,8 @@ app.get('/api/feedbacks', async (req, res) => {
   }
 });
 
-// ✨ NOVO: ESTATÍSTICAS DETALHADAS DE FEEDBACKS
-app.get('/api/feedbacks/stats', async (req, res) => {
+// ✨ NOVO: ESTATÍSTICAS DETALHADAS DE FEEDBACKS COM AUTENTICAÇÃO
+app.get('/api/feedbacks/stats', autenticarFeedbacks, async (req, res) => {
   try {
     const totalAnalises = await Analise.countDocuments();
     const analisesComFeedback = await Analise.countDocuments({ 'feedback.avaliacaoCorreta': { $exists: true } });
@@ -479,8 +490,8 @@ app.get('/api/feedbacks/stats', async (req, res) => {
   }
 });
 
-// ✨ NOVO: PADRÕES DE ERRO DETECTADOS
-app.get('/api/feedbacks/patterns', async (req, res) => {
+// ✨ NOVO: PADRÕES DE ERRO DETECTADOS COM AUTENTICAÇÃO
+app.get('/api/feedbacks/patterns', autenticarFeedbacks, async (req, res) => {
   try {
     // Análises que foram marcadas como erradas
     const erros = await Analise.find({ 'feedback.avaliacaoCorreta': false });
@@ -531,8 +542,8 @@ app.get('/api/feedbacks/patterns', async (req, res) => {
   }
 });
 
-// ✨ NOVO: SUGESTÕES DE MELHORIA BASEADO EM ERROS
-app.get('/api/feedbacks/suggestions', async (req, res) => {
+// ✨ NOVO: SUGESTÕES DE MELHORIA BASEADO EM ERROS COM AUTENTICAÇÃO
+app.get('/api/feedbacks/suggestions', autenticarFeedbacks, async (req, res) => {
   try {
     const patterns = await Analise.aggregate([
       { $match: { 'feedback.avaliacaoCorreta': false } },
