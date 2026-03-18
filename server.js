@@ -70,7 +70,7 @@ const client = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1'
 });
 
-const AI_MODEL = process.env.AI_MODEL || 'openrouter/auto';
+const AI_MODEL = process.env.AI_MODEL || 'openrouter/free';
 
 // ===================== FUNÇÕES AUXILIARES =====================
 function limparJsonString(texto) {
