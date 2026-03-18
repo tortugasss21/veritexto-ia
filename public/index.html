@@ -845,6 +845,7 @@
 
         <div class="tabs">
             <button class="tab-button active" onclick="mudarAba('analise', this)"> Análise</button>
+            <button class="tab-button" onclick="mudarAba('feedbacks', this)"> 📊 Feedbacks</button>
             <button class="tab-button" onclick="mudarAba('estatisticas', this)"> Estatísticas</button>
         </div>
 
@@ -965,6 +966,48 @@
             </div>
         </div>
 
+        <div id="feedbacks" class="tab-content">
+            <div class="card">
+                <h2>📊 Dashboard de Feedbacks</h2>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin: 20px 0;">
+                    <div style="background: var(--light); padding: 16px; border-radius: 12px;">
+                        <div style="font-size: 2em; font-weight: bold; color: var(--primary);" id="fb-total">0</div>
+                        <div style="color: var(--text-light); font-size: 0.9em;">Total de Feedbacks</div>
+                    </div>
+                    <div style="background: var(--light); padding: 16px; border-radius: 12px;">
+                        <div style="font-size: 2em; font-weight: bold; color: var(--success);" id="fb-corretos">0</div>
+                        <div style="color: var(--text-light); font-size: 0.9em;">Análises Corretas</div>
+                    </div>
+                    <div style="background: var(--light); padding: 16px; border-radius: 12px;">
+                        <div style="font-size: 2em; font-weight: bold; color: var(--danger);" id="fb-errados">0</div>
+                        <div style="color: var(--text-light); font-size: 0.9em;">Análises Erradas</div>
+                    </div>
+                    <div style="background: var(--light); padding: 16px; border-radius: 12px;">
+                        <div style="font-size: 2em; font-weight: bold; color: var(--warning);" id="fb-taxa">0%</div>
+                        <div style="color: var(--text-light); font-size: 0.9em;">Taxa de Acerto</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 30px; margin-bottom: 16px;">Acurácia por Tipo de Risco</h3>
+                <div id="fb-acuracia-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px;"></div>
+
+                <h3 style="margin-bottom: 16px;">Sugestões de Melhoria</h3>
+                <div id="fb-suggestions" style="margin-bottom: 30px;"></div>
+
+                <h3 style="margin-bottom: 16px;">Padrões de Erro Detectados</h3>
+                <div id="fb-patterns" style="margin-bottom: 30px;"></div>
+
+                <h3 style="margin-bottom: 16px;">Lista de Feedbacks</h3>
+                <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                    <button class="btn-secondary" onclick="carregarFeedbacks('todos')">Todos</button>
+                    <button class="btn-secondary" onclick="carregarFeedbacks('corretos')">✅ Corretos</button>
+                    <button class="btn-secondary" onclick="carregarFeedbacks('errados')">❌ Errados</button>
+                </div>
+                <div id="fb-lista"></div>
+            </div>
+        </div>
+
         <div id="estatisticas" class="tab-content">
             <div class="card">
                 <h2>Estatísticas</h2>
@@ -1038,6 +1081,104 @@
             if (botao) botao.classList.add('active');
 
             if (aba === 'estatisticas') carregarEstatisticas();
+            if (aba === 'feedbacks') carregarFeedbacks('todos');
+        }
+
+        // ✨ NOVO: CARREGAR FEEDBACKS
+        async function carregarFeedbacks(tipo = 'todos') {
+            try {
+                // Carregar stats
+                const statsResp = await fetch(`${API_URL}/feedbacks/stats`);
+                const stats = await statsResp.json();
+                
+                document.getElementById('fb-total').textContent = stats.analisesComFeedback || 0;
+                document.getElementById('fb-corretos').textContent = stats.feedbackCorretos || 0;
+                document.getElementById('fb-errados').textContent = stats.feedbackErrados || 0;
+                document.getElementById('fb-taxa').textContent = stats.taxaAcerto + '%' || '0%';
+
+                // Acurácia por risco
+                const acuraciaHTML = stats.acuraciasPorRisco.map(a => `
+                    <div style="background: var(--light); padding: 16px; border-radius: 12px;">
+                        <div style="font-weight: 600; text-transform: capitalize; margin-bottom: 8px;">${a.risco}</div>
+                        <div style="font-size: 1.5em; font-weight: bold; color: ${a.taxa >= 70 ? 'var(--success)' : a.taxa >= 50 ? 'var(--warning)' : 'var(--danger)'};">${a.taxa.toFixed(1)}%</div>
+                        <div style="font-size: 0.85em; color: var(--text-light);">${a.corretos} de ${a.total} corretos</div>
+                    </div>
+                `).join('');
+                document.getElementById('fb-acuracia-container').innerHTML = acuraciaHTML || '<p>Sem dados</p>';
+
+                // Sugestões
+                const sugResp = await fetch(`${API_URL}/feedbacks/suggestions`);
+                const suggestions = await sugResp.json();
+                
+                const sugHTML = suggestions.sugestoes.map(s => `
+                    <div style="background: ${s.tipo === 'FALSO POSITIVO' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; border-left: 4px solid ${s.tipo === 'FALSO POSITIVO' ? 'var(--danger)' : 'var(--warning)'}; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                        <div style="font-weight: 600; margin-bottom: 4px;">${s.tipo || s.info}</div>
+                        ${s.problema ? `<div style="color: var(--text-light); font-size: 0.9em; margin-bottom: 8px;">${s.problema}</div>` : ''}
+                        ${s.solucao ? `<div style="color: var(--primary); font-size: 0.9em;">💡 ${s.solucao}</div>` : ''}
+                        ${s.impacto ? `<div style="color: var(--text-light); font-size: 0.85em; margin-top: 4px;">${s.impacto}</div>` : ''}
+                    </div>
+                `).join('');
+                document.getElementById('fb-suggestions').innerHTML = sugHTML || '<p>Nenhuma sugestão no momento</p>';
+
+                // Padrões
+                const patResp = await fetch(`${API_URL}/feedbacks/patterns`);
+                const patterns = await patResp.json();
+                
+                let patHTML = '';
+                if (patterns.riscosComMaiorErro && Object.keys(patterns.riscosComMaiorErro).length > 0) {
+                    patHTML = '<div style="background: var(--light); padding: 16px; border-radius: 12px; margin-bottom: 12px;">';
+                    patHTML += '<strong>Maior Quantidade de Erros Por Risco:</strong><br>';
+                    for (const [risco, count] of Object.entries(patterns.riscosComMaiorErro)) {
+                        patHTML += `<div style="margin-top: 8px;">🔴 <strong>${risco}:</strong> ${count} erros</div>`;
+                    }
+                    patHTML += '</div>';
+                }
+                
+                if (patterns.textosMaisErrados && patterns.textosMaisErrados.length > 0) {
+                    patHTML += '<div style="background: rgba(239, 68, 68, 0.08); padding: 16px; border-radius: 12px;">';
+                    patHTML += '<strong>Textos Mais Frequentemente Marcados como Errados:</strong>';
+                    patterns.textosMaisErrados.forEach((t, i) => {
+                        patHTML += `<div style="margin-top: 8px; padding: 8px; background: white; border-radius: 6px; border-left: 3px solid var(--danger);">
+                            <div style="font-size: 0.9em;"><strong>${t.texto}...</strong></div>
+                            <div style="font-size: 0.85em; color: var(--text-light); margin-top: 4px;">Risco: ${t.risco} | Obs: ${t.observacao || 'Sem observações'}</div>
+                        </div>`;
+                    });
+                    patHTML += '</div>';
+                }
+                
+                document.getElementById('fb-patterns').innerHTML = patHTML || '<p>Nenhum padrão detectado</p>';
+
+                // Lista de feedbacks
+                let filtroCorreto = null;
+                if (tipo === 'corretos') filtroCorreto = 'true';
+                if (tipo === 'errados') filtroCorreto = 'false';
+
+                const fbResp = await fetch(`${API_URL}/feedbacks?correto=${filtroCorreto || ''}&limit=50`);
+                const fbData = await fbResp.json();
+
+                const fbHTML = fbData.feedbacks.map(fb => `
+                    <div style="background: var(--light); padding: 16px; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid ${fb.avaliacaoCorreta ? 'var(--success)' : 'var(--danger)'};">
+                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 16px;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 4px;">
+                                    ${fb.avaliacaoCorreta ? '✅' : '❌'} "${fb.texto}"
+                                </div>
+                                <div style="font-size: 0.9em; color: var(--text-light); margin-bottom: 8px;">
+                                    Análise: <strong style="text-transform: uppercase;">${fb.risco}</strong> (${fb.percentualRisco}%) | ${fb.sinais.length} sinais
+                                </div>
+                                ${fb.observacoes ? `<div style="font-size: 0.85em; background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px; border-left: 2px solid var(--warning);">📝 ${fb.observacoes}</div>` : ''}
+                                <div style="font-size: 0.8em; color: var(--text-light);">📅 ${new Date(fb.dataFeedback).toLocaleDateString('pt-BR')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('fb-lista').innerHTML = fbHTML || '<p>Nenhum feedback neste filtro</p>';
+
+            } catch (error) {
+                console.error('Erro ao carregar feedbacks:', error);
+                document.getElementById('fb-lista').innerHTML = '<p style="color: var(--danger);">Erro ao carregar feedbacks</p>';
+            }
         }
 
         function limparMensagens() {
