@@ -214,6 +214,82 @@
             background: var(--border);
         }
 
+        /* ── Modal de Autenticação ── */
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .auth-modal.show {
+            display: flex;
+        }
+
+        .auth-modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        body.dark-mode .auth-modal-content {
+            background: #2a2a3e;
+        }
+
+        .auth-modal-content h2 {
+            margin-bottom: 16px;
+            color: var(--primary);
+        }
+
+        .auth-modal-content p {
+            color: var(--text-light);
+            margin-bottom: 20px;
+            font-size: 0.95em;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1em;
+            margin-bottom: 16px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            background: var(--light);
+            color: var(--text);
+        }
+
+        body.dark-mode .auth-input {
+            background: #3a3a4e;
+            border-color: #4a4a5e;
+            color: #e0e0e0;
+        }
+
+        .auth-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+        }
+
+        .auth-modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .auth-modal-buttons button {
+            flex: 1;
+        }
+
         .loading-spinner {
             display: inline-block;
             width: 20px;
@@ -845,7 +921,7 @@
 
         <div class="tabs">
             <button class="tab-button active" onclick="mudarAba('analise', this)"> Análise</button>
-            <button class="tab-button" onclick="mudarAba('feedbacks', this)"> 📊 Feedbacks</button>
+            <button class="tab-button" id="tab-feedbacks-btn" onclick="verificarAutenticacaoFeedbacks(event)"> 🔒 Acesso</button>
             <button class="tab-button" onclick="mudarAba('estatisticas', this)"> Estatísticas</button>
         </div>
 
@@ -968,7 +1044,10 @@
 
         <div id="feedbacks" class="tab-content">
             <div class="card">
-                <h2>📊 Dashboard de Feedbacks</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>📊 Dashboard de Feedbacks (Privado)</h2>
+                    <button class="btn-secondary" onclick="logout()" style="padding: 8px 16px; font-size: 0.9em;">🚪 Sair</button>
+                </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin: 20px 0;">
                     <div style="background: var(--light); padding: 16px; border-radius: 12px;">
@@ -1015,6 +1094,19 @@
                     <p>Carregando...</p>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="auth-modal" id="authModal">
+        <div class="auth-modal-content">
+            <h2>🔒 Acesso Restrito</h2>
+            <p>Digite a senha para acessar o dashboard de feedbacks</p>
+            <input type="password" class="auth-input" id="authPassword" placeholder="Senha" onkeypress="if(event.key==='Enter') autenticarFeedbacks()">
+            <div class="auth-modal-buttons">
+                <button class="btn-secondary" onclick="fecharAuthModal()">Cancelar</button>
+                <button class="btn-primary" onclick="autenticarFeedbacksModal()">Entrar</button>
+            </div>
+            <p id="authError" style="color: var(--danger); margin-top: 12px; display: none;"></p>
         </div>
     </div>
 
@@ -1084,11 +1176,92 @@
             if (aba === 'feedbacks') carregarFeedbacks('todos');
         }
 
-        // ✨ NOVO: CARREGAR FEEDBACKS
-        async function carregarFeedbacks(tipo = 'todos') {
+        // ✨ NOVO: VERIFICAR AUTENTICAÇÃO PARA FEEDBACKS
+        function verificarAutenticacaoFeedbacks(event) {
+            event.preventDefault();
+            const token = localStorage.getItem('feedbacksToken');
+            
+            if (token) {
+                // Já está autenticado
+                mudarAba('feedbacks', document.getElementById('tab-feedbacks-btn'));
+                carregarFeedbacks('todos', token);
+            } else {
+                // Mostrar modal de senha
+                document.getElementById('authModal').classList.add('show');
+                document.getElementById('authPassword').focus();
+                document.getElementById('authError').style.display = 'none';
+            }
+        }
+
+        function fecharAuthModal() {
+            document.getElementById('authModal').classList.remove('show');
+            document.getElementById('authPassword').value = '';
+            document.getElementById('authError').style.display = 'none';
+        }
+
+        function autenticarFeedbacksModal() {
+            const senha = document.getElementById('authPassword').value;
+            
+            if (!senha) {
+                mostrarErroAuth('Digite a senha');
+                return;
+            }
+
+            // Testar a senha fazendo uma requisição
+            fetch(`${API_URL}/feedbacks/stats?senha=${encodeURIComponent(senha)}`)
+                .then(res => {
+                    if (res.status === 401) {
+                        mostrarErroAuth('❌ Senha incorreta');
+                        return null;
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (data) {
+                        // Autenticação bem-sucedida
+                        localStorage.setItem('feedbacksToken', senha);
+                        fecharAuthModal();
+                        mudarAba('feedbacks', document.getElementById('tab-feedbacks-btn'));
+                        carregarFeedbacks('todos', senha);
+                    }
+                })
+                .catch(error => {
+                    mostrarErroAuth('Erro na autenticação');
+                    console.error(error);
+                });
+        }
+
+        function mostrarErroAuth(msg) {
+            const errorEl = document.getElementById('authError');
+            errorEl.textContent = msg;
+            errorEl.style.display = 'block';
+        }
+
+        function logout() {
+            localStorage.removeItem('feedbacksToken');
+            mudarAba('analise', document.querySelector('.tab-button.active'));
+        }
+
+        // ✨ NOVO: CARREGAR FEEDBACKS COM AUTENTICAÇÃO
+        async function carregarFeedbacks(tipo = 'todos', token = null) {
             try {
+                // Se não tiver token, tenta do localStorage
+                if (!token) {
+                    token = localStorage.getItem('feedbacksToken');
+                }
+
+                if (!token) {
+                    mostrarErroAuth('Não autenticado');
+                    return;
+                }
+
                 // Carregar stats
-                const statsResp = await fetch(`${API_URL}/feedbacks/stats`);
+                const statsResp = await fetch(`${API_URL}/feedbacks/stats?senha=${encodeURIComponent(token)}`);
+                if (statsResp.status === 401) {
+                    logout();
+                    mostrarErroAuth('Sessão expirada. Faça login novamente.');
+                    return;
+                }
                 const stats = await statsResp.json();
                 
                 document.getElementById('fb-total').textContent = stats.analisesComFeedback || 0;
@@ -1107,7 +1280,7 @@
                 document.getElementById('fb-acuracia-container').innerHTML = acuraciaHTML || '<p>Sem dados</p>';
 
                 // Sugestões
-                const sugResp = await fetch(`${API_URL}/feedbacks/suggestions`);
+                const sugResp = await fetch(`${API_URL}/feedbacks/suggestions?senha=${encodeURIComponent(token)}`);
                 const suggestions = await sugResp.json();
                 
                 const sugHTML = suggestions.sugestoes.map(s => `
@@ -1121,7 +1294,7 @@
                 document.getElementById('fb-suggestions').innerHTML = sugHTML || '<p>Nenhuma sugestão no momento</p>';
 
                 // Padrões
-                const patResp = await fetch(`${API_URL}/feedbacks/patterns`);
+                const patResp = await fetch(`${API_URL}/feedbacks/patterns?senha=${encodeURIComponent(token)}`);
                 const patterns = await patResp.json();
                 
                 let patHTML = '';
@@ -1153,7 +1326,7 @@
                 if (tipo === 'corretos') filtroCorreto = 'true';
                 if (tipo === 'errados') filtroCorreto = 'false';
 
-                const fbResp = await fetch(`${API_URL}/feedbacks?correto=${filtroCorreto || ''}&limit=50`);
+                const fbResp = await fetch(`${API_URL}/feedbacks?correto=${filtroCorreto || ''}&limit=50&senha=${encodeURIComponent(token)}`);
                 const fbData = await fbResp.json();
 
                 const fbHTML = fbData.feedbacks.map(fb => `
