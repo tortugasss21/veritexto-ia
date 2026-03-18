@@ -70,7 +70,7 @@ const client = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1'
 });
 
-const AI_MODEL = process.env.AI_MODEL || 'google/gemini-2.0-flash-exp:free';
+const AI_MODEL = process.env.AI_MODEL || 'openrouter/auto';
 
 // ===================== FUNÇÕES AUXILIARES =====================
 function limparJsonString(texto) {
