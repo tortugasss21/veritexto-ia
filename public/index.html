@@ -279,8 +279,62 @@
             padding-top: 16px;
             border-top: 1px solid var(--border);
             display: flex;
-            justify-content: flex-end;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
         }
+
+        .feedback-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feedback-label {
+            font-size: 0.85em;
+            color: var(--text-light);
+        }
+
+        .btn-feedback {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--light);
+            color: var(--text);
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .btn-feedback:hover { background: var(--border); }
+
+        .btn-feedback.selected-yes {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .btn-feedback.selected-no {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+
+        .feedback-msg {
+            font-size: 0.82em;
+            color: var(--text-light);
+        }
+
+        body.dark-mode .btn-feedback {
+            background: #3a3a4e;
+            border-color: #4a4a5e;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .btn-feedback:hover { background: #4a4a5e; }
+        body.dark-mode .copy-row { border-top-color: #4a4a5e; }
 
         .btn-copy {
             background: none;
@@ -721,6 +775,12 @@
                     </div>
 
                     <div class="copy-row">
+                        <div class="feedback-row" id="feedbackRow">
+                            <span class="feedback-label">Essa análise foi útil?</span>
+                            <button class="btn-feedback btn-yes" id="btnSim" onclick="enviarFeedback(true)">Sim</button>
+                            <button class="btn-feedback btn-no" id="btnNao" onclick="enviarFeedback(false)">Não</button>
+                            <span class="feedback-msg" id="feedbackMsg"></span>
+                        </div>
                         <button class="btn-copy" id="btnCopiar" onclick="copiarResultado()">Copiar resultado</button>
                     </div>
                 </div>
@@ -741,6 +801,7 @@
 
     <script>
         const API_URL = window.location.origin + '/api';
+        let analiseAtualId = null;
 
         const exemplos = {
             exemplo_alto: "URGENTE! COMPARTILHE ANTES QUE APAGUEM! Cientistas descobrem verdade que o governo quer esconder! Clique aqui para saber mais!",
@@ -845,6 +906,7 @@
                 }
 
                 skeleton.style.display = 'none';
+                analiseAtualId = resultado.id || null;
                 mostrarResultados(resultado);
                 marcarQueJaUsouFerramenta();
 
@@ -902,6 +964,13 @@
             const r = document.getElementById('resultados');
             r.style.display = 'block';
             r.classList.add('visible');
+
+            // Reset feedback
+            document.getElementById('feedbackMsg').textContent = '';
+            document.getElementById('btnSim').className = 'btn-feedback btn-yes';
+            document.getElementById('btnNao').className = 'btn-feedback btn-no';
+            document.getElementById('btnSim').disabled = false;
+            document.getElementById('btnNao').disabled = false;
         }
 
         function limparFormulario() {
@@ -1006,6 +1075,32 @@
             if (disclaimer) disclaimer.style.display = 'none';
         }
 
+
+        async function enviarFeedback(correta) {
+            if (!analiseAtualId) return;
+
+            const btnSim = document.getElementById('btnSim');
+            const btnNao = document.getElementById('btnNao');
+            const msg = document.getElementById('feedbackMsg');
+
+            btnSim.disabled = true;
+            btnNao.disabled = true;
+            btnSim.className = 'btn-feedback btn-yes' + (correta ? ' selected-yes' : '');
+            btnNao.className = 'btn-feedback btn-no' + (!correta ? ' selected-no' : '');
+
+            try {
+                await fetch(`${API_URL}/feedback/${analiseAtualId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ avaliacaoCorreta: correta })
+                });
+                msg.textContent = 'Obrigado pelo feedback!';
+            } catch (e) {
+                msg.textContent = 'Erro ao enviar feedback.';
+                btnSim.disabled = false;
+                btnNao.disabled = false;
+            }
+        }
 
         function copiarResultado() {
             const titulo = document.getElementById('riskTitle').textContent;
