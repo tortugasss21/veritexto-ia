@@ -335,6 +335,73 @@ function normalizarResultado(resultado, textoOriginal = '') {
 
 // ✅ FIX 4: Fallback inteligente — quando a IA falha, o sistema analisa o texto por conta própria
 // em vez de retornar um resultado genérico inútil
+// ===================== SERPER — BUSCA REAL NO GOOGLE =====================
+async function pesquisarNoGoogle(query) {
+  if (!process.env.SERPER_API_KEY) return null;
+
+  try {
+    const response = await fetch('https://google.serper.dev/search', {
+      method: 'POST',
+      headers: {
+        'X-API-KEY': process.env.SERPER_API_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ q: query, gl: 'br', hl: 'pt-br', num: 5 })
+    });
+
+    if (!response.ok) return null;
+    const data = await response.json();
+
+    // Extrai os snippets mais relevantes dos resultados
+    const resultados = (data.organic || []).slice(0, 5).map(r => ({
+      titulo: r.title || '',
+      snippet: r.snippet || '',
+      fonte: r.displayLink || '',
+      link: r.link || ''
+    }));
+
+    return resultados;
+  } catch (err) {
+    console.warn('Serper falhou:', err.message);
+    return null;
+  }
+}
+
+// Extrai queries de busca relevantes do texto
+function extrairQueriesDeBusca(texto) {
+  const queries = [];
+  const t = texto.trim();
+
+  // Query 1: primeiras palavras-chave do texto (pessoas, instituições, evento)
+  const primeirasFrases = t.split(/[.!?]/)[0].substring(0, 120);
+  queries.push(primeirasFrases);
+
+  // Query 2: busca por nomes próprios + instituições detectadas
+  const nomeProprio = t.match(/\b[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][a-záéíóúàâêôãõç]+ [A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][a-záéíóúàâêôãõç]+\b/);
+  const instituicaoMatch = t.match(/\b(IBGE|IPEA|Inmet|TSE|STF|Banco Central|Copom|Anvisa|Petrobras|Nvidia|Fiocruz|OMS|CAGED|Embrapa)\b/i);
+  if (nomeProprio && instituicaoMatch) {
+    queries.push(`${nomeProprio[0]} ${instituicaoMatch[0]}`);
+  }
+
+  // Query 3: números + contexto (recorde, taxa, percentual)
+  const dadoNumerico = t.match(/\d+[,.]?\d*\s*(%|°C|bilh[õo]es|milh[õo]es|reais)/i);
+  if (dadoNumerico) {
+    const contexto = t.substring(Math.max(0, t.indexOf(dadoNumerico[0]) - 40), t.indexOf(dadoNumerico[0]) + 60);
+    queries.push(contexto.trim());
+  }
+
+  return queries.filter(Boolean).slice(0, 3);
+}
+
+function formatarResultadosBusca(resultados, query) {
+  if (!resultados || resultados.length === 0) {
+    return `Busca "${query}": Nenhum resultado encontrado.`;
+  }
+  return `Busca "${query}":\n` + resultados.map((r, i) =>
+    `  ${i + 1}. [${r.fonte}] ${r.titulo}\n     ${r.snippet}`
+  ).join('\n');
+}
+
 function criarResultadoFallback(textoOriginal = '') {
   const entidades = detectarEntidades(textoOriginal);
   const t = textoOriginal.toLowerCase();
@@ -502,48 +569,38 @@ RESPOSTA ESPERADA (JSON):
   "fontesSugeridas": ["Fonte 1 com URL se possível", "Fonte 2", ...]
 }`;
 
-    // ===================== ETAPA 1: PESQUISA WEB =====================
-    // Gemini com Google Search ativado — não aceita JSON mode, retorna texto livre
-    // Objetivo: verificar fatos reais antes de classificar
-    let contextoVerificacao = '';
+    // ===================== ETAPA 1: PESQUISA REAL NO GOOGLE (SERPER) =====================
+    let contextoVerificacao = 'Pesquisa web indisponível nesta análise.';
     try {
-      const modelPesquisa = genAI.getGenerativeModel(
-        {
-          model: 'gemini-2.5-flash-lite',
-          tools: [{ googleSearch: {} }],
-          generationConfig: { temperature: 0.1 },
-        },
-        { apiVersion: 'v1beta' }
-      );
+      const queries = extrairQueriesDeBusca(texto);
+      const resultadosBusca = await Promise.all(queries.map(q => pesquisarNoGoogle(q)));
 
-      const promptPesquisa = `Você é um verificador de fatos. Analise o texto abaixo e pesquise na web para verificar se as informações são verdadeiras.
+      const trechosBusca = queries.map((q, i) =>
+        formatarResultadosBusca(resultadosBusca[i], q)
+      ).join('\n\n');
 
-Para cada afirmação importante (números, recordes, cargos, eventos, datas), busque confirmação.
-
-Responda em português com:
-1. O que foi CONFIRMADO por fontes confiáveis (com as fontes encontradas)
-2. O que NÃO foi encontrado ou contradiz fontes confiáveis
-3. O que é IMPOSSÍVEL de verificar
-
-Texto: "${texto}"`;
-
-      const resultPesquisa = await modelPesquisa.generateContent(promptPesquisa);
-      contextoVerificacao = resultPesquisa.response.text();
+      if (trechosBusca.trim()) {
+        contextoVerificacao = trechosBusca;
+        console.log(`[Serper] ${queries.length} busca(s) realizada(s)`);
+      }
     } catch (errPesquisa) {
-      console.warn('Pesquisa web falhou, continuando sem ela:', errPesquisa.message);
-      contextoVerificacao = 'Pesquisa web indisponível nesta análise.';
+      console.warn('Serper falhou, continuando sem ela:', errPesquisa.message);
     }
 
     // ===================== ETAPA 2: ANÁLISE ESTRUTURADA =====================
     // Agora com JSON mode + o resultado da pesquisa como contexto adicional
     const userPrompt = `Analise o seguinte texto quanto a possíveis sinais de desinformação.
 
-RESULTADO DA PESQUISA WEB FEITA SOBRE ESTE TEXTO:
+RESULTADOS REAIS DE BUSCA NO GOOGLE (feita agora, não é simulação):
 ---
 ${contextoVerificacao}
 ---
 
-Use esse resultado de pesquisa para calibrar o risco. Se a pesquisa confirmou os fatos, reduza o risco. Se contradiz ou não encontrou nada, aumente.
+INSTRUÇÕES PARA USO DOS RESULTADOS:
+- Se os resultados CONFIRMAM os fatos do texto → reduza o risco, mencione as fontes na explicacao
+- Se os resultados CONTRADIZEM → aumente o risco, explique a contradição na explicacao
+- Se NENHUM resultado foi encontrado para afirmações específicas → isso é sinal de alerta, mencione na explicacao
+- Se a busca estava indisponível → analise só pelo conteúdo do texto
 
 Texto para análise:
 "${texto}"`;
@@ -730,21 +787,6 @@ SINAIS SUTIS (desinformação sofisticada):
 11. Dados que contradizem tendências conhecidas sem explicação
 
 ════════════════════════════════════════
-VERIFICAÇÃO DE FATOS — SIMULE UMA BUSCA
-════════════════════════════════════════
-Para cada dado específico no texto (número, recorde, cargo, evento), pergunte a si mesmo:
-"Consigo confirmar isso com base no meu conhecimento até minha data de corte?"
-
-- Se SIM e os dados batem → reduza o risco desse elemento
-- Se NÃO ou se há incerteza → adicione nos sinais e mencione na explicação o que NÃO foi possível verificar
-- Se o dado contradiz algo que você sabe → aumente o risco e explique a contradição
-
-Exemplos do que mencionar na explicacao:
-→ "Não foi possível confirmar se [nome] ocupa o cargo de [cargo] em [instituição]"
-→ "O recorde mencionado não corresponde a dados conhecidos da instituição citada"
-→ "A taxa/número é plausível mas não pôde ser vinculada a uma divulgação específica"
-
-════════════════════════════════════════
 TIPOS DE DESINFORMAÇÃO:
 ════════════════════════════════════════
 - "boato": Boato viral sem base em fatos verificáveis
@@ -779,34 +821,24 @@ RESPOSTA ESPERADA (JSON):
   "fontesSugeridas": ["Fonte 1 com URL se possível", "Fonte 2", ...]
 }`;
 
-    // ===================== ETAPA 1: PESQUISA WEB =====================
-    let contextoVerificacaoUrl = '';
+    // ===================== ETAPA 1: PESQUISA REAL NO GOOGLE (SERPER) =====================
+    let contextoVerificacaoUrl = 'Pesquisa web indisponível nesta análise.';
     try {
-      const modelPesquisa = genAI.getGenerativeModel(
-        {
-          model: 'gemini-2.5-flash-lite',
-          tools: [{ googleSearch: {} }],
-          generationConfig: { temperature: 0.1 },
-        },
-        { apiVersion: 'v1beta' }
-      );
+      const queries = extrairQueriesDeBusca(texto);
+      // Adiciona query específica sobre o domínio de origem
+      queries.push(`site:${urlObj.hostname} OR "${urlObj.hostname}"`);
 
-      const promptPesquisa = `Você é um verificador de fatos. O texto abaixo foi extraído do domínio "${urlObj.hostname}".
+      const resultadosBusca = await Promise.all(queries.map(q => pesquisarNoGoogle(q)));
+      const trechosBusca = queries.map((q, i) =>
+        formatarResultadosBusca(resultadosBusca[i], q)
+      ).join('\n\n');
 
-Pesquise na web para verificar se as afirmações principais são verdadeiras.
-
-Responda em português com:
-1. O que foi CONFIRMADO por fontes confiáveis
-2. O que NÃO foi encontrado ou contradiz fontes confiáveis
-3. Avaliação do domínio de origem (é confiável? é conhecido?)
-
-Texto: "${texto.substring(0, 2000)}"`;
-
-      const resultPesquisa = await modelPesquisa.generateContent(promptPesquisa);
-      contextoVerificacaoUrl = resultPesquisa.response.text();
+      if (trechosBusca.trim()) {
+        contextoVerificacaoUrl = trechosBusca;
+        console.log(`[Serper URL] ${queries.length} busca(s) realizada(s) para ${urlObj.hostname}`);
+      }
     } catch (errPesquisa) {
-      console.warn('Pesquisa web (URL) falhou:', errPesquisa.message);
-      contextoVerificacaoUrl = 'Pesquisa web indisponível nesta análise.';
+      console.warn('Serper (URL) falhou:', errPesquisa.message);
     }
 
     // ===================== ETAPA 2: ANÁLISE ESTRUTURADA =====================
