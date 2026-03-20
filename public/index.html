@@ -1237,14 +1237,33 @@
         }
         .fb-item-date { font-size: 0.8em; color: var(--text-light); }
 
-        /* ── Filtro de data ── */
-        .fb-filter-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+        /* ── Filtro de data colapsável ── */
+        .fb-filter-toggle {
+            display: inline-flex;
             align-items: center;
-            margin-bottom: 14px;
+            gap: 6px;
+            padding: 7px 14px;
+            font-size: 0.85em;
+            font-weight: 600;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: var(--light);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
         }
+        .fb-filter-toggle:hover { border-color: var(--primary); color: var(--primary); }
+        .fb-filter-toggle.active { border-color: var(--primary); color: var(--primary); background: rgba(0,102,255,0.07); }
+        .fb-filter-panel {
+            display: none;
+            background: var(--light);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 14px;
+            border: 1px solid var(--border);
+        }
+        .fb-filter-panel.open { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
         .fb-date-input {
             padding: 8px 12px;
             border: 2px solid var(--border);
@@ -1514,9 +1533,6 @@
                     </div>
                 </div>
 
-                <h3 style="margin-top: 30px; margin-bottom: 16px;">Acurácia por Tipo de Risco</h3>
-                <div class="fb-acuracia-grid" id="fb-acuracia-container"></div>
-
                 <h3 style="margin-bottom: 16px;">Sugestões de Melhoria</h3>
                 <div id="fb-suggestions" style="margin-bottom: 30px;"></div>
 
@@ -1524,17 +1540,18 @@
                 <div id="fb-patterns" style="margin-bottom: 30px;"></div>
 
                 <h3 style="margin-bottom: 12px;">Lista de Feedbacks</h3>
-                <div class="fb-filter-row">
-                    <input type="date" class="fb-date-input" id="fbDateDe" title="A partir de">
-                    <span class="fb-filter-sep">até</span>
-                    <input type="date" class="fb-date-input" id="fbDateAte" title="Até">
-                    <button class="btn-secondary" style="padding:7px 14px;font-size:0.85em;" onclick="carregarFeedbacks(fbFiltroAtual)">Filtrar</button>
-                    <button class="btn-secondary" style="padding:7px 14px;font-size:0.85em;" onclick="limparFiltroData()">✕</button>
-                </div>
-                <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;">
                     <button class="btn-secondary" onclick="setFbFiltro('todos')">Todos</button>
                     <button class="btn-secondary" onclick="setFbFiltro('corretos')">✅ Corretos</button>
                     <button class="btn-secondary" onclick="setFbFiltro('errados')">❌ Errados</button>
+                    <button class="fb-filter-toggle" id="fbFilterToggle" onclick="toggleFiltroData()">📅 Filtrar por data</button>
+                </div>
+                <div class="fb-filter-panel" id="fbFilterPanel">
+                    <input type="date" class="fb-date-input" id="fbDateDe" title="A partir de">
+                    <span class="fb-filter-sep">até</span>
+                    <input type="date" class="fb-date-input" id="fbDateAte" title="Até">
+                    <button class="btn-secondary" style="padding:7px 14px;font-size:0.85em;" onclick="carregarFeedbacks(fbFiltroAtual)">Aplicar</button>
+                    <button class="btn-secondary" style="padding:7px 14px;font-size:0.85em;" onclick="limparFiltroData()">Limpar</button>
                 </div>
                 <div id="fb-lista"></div>
             </div>
@@ -1702,6 +1719,14 @@
             carregarFeedbacks(tipo);
         }
 
+        function toggleFiltroData() {
+            const panel  = document.getElementById('fbFilterPanel');
+            const toggle = document.getElementById('fbFilterToggle');
+            const open   = panel.classList.toggle('open');
+            toggle.classList.toggle('active', open);
+            toggle.textContent = open ? '📅 Fechar filtro' : '📅 Filtrar por data';
+        }
+
         function limparFiltroData() {
             document.getElementById('fbDateDe').value  = '';
             document.getElementById('fbDateAte').value = '';
@@ -1723,16 +1748,6 @@
                 document.getElementById('fb-corretos').textContent = stats.feedbackCorretos || 0;
                 document.getElementById('fb-errados').textContent  = stats.feedbackErrados || 0;
                 document.getElementById('fb-taxa').textContent     = (stats.taxaAcerto || 0) + '%';
-
-                // ── Acurácia por risco ──
-                const acuraciaHTML = (stats.acuraciasPorRisco || []).map(a => `
-                    <div class="fb-acuracia-card">
-                        <div class="fb-acuracia-risco">${a.risco}</div>
-                        <div class="fb-acuracia-taxa" style="color:${a.taxa >= 70 ? 'var(--success)' : a.taxa >= 50 ? 'var(--warning)' : 'var(--danger)'};">${a.taxa.toFixed(1)}%</div>
-                        <div class="fb-acuracia-detalhe">${a.corretos} de ${a.total} corretos</div>
-                    </div>
-                `).join('');
-                document.getElementById('fb-acuracia-container').innerHTML = acuraciaHTML || '<p>Sem dados</p>';
 
                 // ── Sugestões ──
                 const sugResp   = await fetch(`${API_URL}/feedbacks/suggestions?senha=${encodeURIComponent(token)}`);
