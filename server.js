@@ -71,7 +71,7 @@ const analiseSchema = new mongoose.Schema({
 const Analise = mongoose.model('Analise', analiseSchema);
 
 // ===================== GOOGLE GEMINI API =====================
-// ✅ Modelo principal: gemini-2.0-flash | Fallback: gemini-1.5-flash
+// ✅ Modelo: gemini-2.5-flash-lite
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // ===================== FUNÇÕES AUXILIARES =====================
@@ -609,20 +609,11 @@ INSTRUÇÕES PARA USO DOS RESULTADOS:
 Texto para análise:
 "${texto}"`;
 
-    let model;
-    try {
-      model = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash',
-        systemInstruction: systemPrompt,
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
-      });
-    } catch {
-      model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
-        systemInstruction: systemPrompt,
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
-      });
-    }
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash-lite',
+      systemInstruction: systemPrompt,
+      generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+    }, { apiVersion: 'v1beta' });
 
     const result = await model.generateContent(userPrompt);
 
@@ -854,20 +845,11 @@ Use esse resultado para calibrar o risco. Se a pesquisa confirmou os fatos e o d
 Texto extraído:
 "${texto}"`;
 
-    let model;
-    try {
-      model = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash',
-        systemInstruction: systemPrompt,
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
-      });
-    } catch {
-      model = genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
-        systemInstruction: systemPrompt,
-        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
-      });
-    }
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash-lite',
+      systemInstruction: systemPrompt,
+      generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+    }, { apiVersion: 'v1beta' });
 
     const result = await model.generateContent(userPrompt);
     const respostaCompleta = result.response.text();
