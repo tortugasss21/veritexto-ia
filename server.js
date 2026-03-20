@@ -242,13 +242,6 @@ SINAIS SUTIS (desinformação sofisticada):
 12. Dados que contradizem tendências conhecidas sem explicação do motivo
 
 ════════════════════════════════════════
-REGRA ESPECIAL — TEXTO SEM URL DE ORIGEM:
-════════════════════════════════════════
-Se o texto apresenta dados estatísticos, nomes de especialistas com cargos ou resultados de pesquisas, MAS não possui uma URL de origem verificável:
-→ Isso É um sinal de alerta. Adicione nos sinais: "Texto sem URL de origem verificável contendo dados estatísticos específicos"
-→ O risco mínimo nesse caso é "medio"
-
-════════════════════════════════════════
 TIPOS DE DESINFORMAÇÃO:
 ════════════════════════════════════════
 - "boato": Boato viral sem base em fatos verificáveis
@@ -284,8 +277,6 @@ RESPOSTA ESPERADA (JSON):
 }`;
 
     const userPrompt = `Analise o seguinte texto quanto a possíveis sinais de desinformação.
-
-CONTEXTO IMPORTANTE: Este texto foi enviado diretamente pelo usuário, SEM URL de origem. Portanto, se contiver dados estatísticos, nomes de especialistas com cargos ou resultados de pesquisas, aplique a REGRA ESPECIAL de texto sem URL.
 
 Texto para análise:
 "${texto}"`;
