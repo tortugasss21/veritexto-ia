@@ -1018,6 +1018,299 @@
         .url-preview.show { display: block; }
         .url-preview strong { color: var(--primary); }
 
+        /* ── Contador de caracteres ── */
+        .char-counter {
+            text-align: right;
+            font-size: 0.78em;
+            color: var(--text-light);
+            margin-top: 4px;
+            transition: color 0.2s;
+            user-select: none;
+        }
+        .char-counter.warn  { color: var(--warning); font-weight: 600; }
+        .char-counter.limit { color: var(--danger);  font-weight: 700; }
+
+        /* ── Histórico local ── */
+        .history-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            display: none;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .history-header h4 {
+            font-size: 0.9em;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+        .history-toggle-icon {
+            font-size: 0.75em;
+            color: var(--text-light);
+            transition: transform 0.2s;
+        }
+        .history-toggle-icon.open { transform: rotate(180deg); }
+        .history-list { display: none; margin-top: 12px; }
+        .history-list.open { display: block; }
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 12px;
+            background: var(--light);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .history-item:hover { background: var(--border); }
+        .history-item-text {
+            flex: 1;
+            font-size: 0.83em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text);
+        }
+        .history-item-badge {
+            font-size: 0.72em;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            color: white;
+        }
+        .history-item-date {
+            font-size: 0.72em;
+            color: var(--text-light);
+            flex-shrink: 0;
+        }
+        .history-clear-btn {
+            font-size: 0.75em;
+            color: var(--danger);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px 6px;
+            font-weight: 600;
+        }
+
+        /* ── Compartilhar ── */
+        .btn-share {
+            background: none;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            font-size: 0.85em;
+            padding: 8px 16px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn-share:hover { background: var(--primary); color: white; }
+        .btn-share.shared { color: var(--success); border-color: var(--success); }
+        body.dark-mode .btn-share { color: #60a5fa; border-color: #60a5fa; }
+        body.dark-mode .btn-share:hover { background: #60a5fa; color: #1a1a2e; }
+
+        /* ── Progress steps ── */
+        .progress-steps {
+            background: var(--light);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+        }
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.88em;
+            color: var(--text-light);
+            padding: 5px 0;
+            opacity: 0.4;
+            transition: opacity 0.3s, color 0.3s;
+        }
+        .progress-step.active { opacity: 1; color: var(--primary); font-weight: 600; }
+        .progress-step.done   { opacity: 1; color: var(--success); }
+        .progress-step-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            flex-shrink: 0;
+        }
+        .progress-step.active .progress-step-dot {
+            animation: pulse-dot 0.9s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50%       { transform: scale(1.6); opacity: 0.6; }
+        }
+
+        /* ── Dashboard CSS Classes ── */
+        .fb-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 16px;
+            margin: 20px 0;
+        }
+        @media (max-width: 640px) { .fb-stats-grid { grid-template-columns: 1fr 1fr; } }
+        .fb-stat-card {
+            background: var(--light);
+            padding: 16px;
+            border-radius: 12px;
+        }
+        .fb-stat-number { font-size: 2em; font-weight: bold; }
+        .fb-stat-label  { color: var(--text-light); font-size: 0.9em; }
+
+        .fb-acuracia-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        @media (max-width: 640px) { .fb-acuracia-grid { grid-template-columns: 1fr; } }
+        .fb-acuracia-card {
+            background: var(--light);
+            padding: 16px;
+            border-radius: 12px;
+        }
+        .fb-acuracia-risco  { font-weight: 600; text-transform: capitalize; margin-bottom: 8px; }
+        .fb-acuracia-taxa   { font-size: 1.5em; font-weight: bold; }
+        .fb-acuracia-detalhe{ font-size: 0.85em; color: var(--text-light); }
+
+        .fb-sugestao-card {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid;
+        }
+        .fb-sugestao-card.fp { background: rgba(239,68,68,0.1); border-color: var(--danger); }
+        .fb-sugestao-card.fn { background: rgba(245,158,11,0.1); border-color: var(--warning); }
+        .fb-sugestao-tipo     { font-weight: 600; margin-bottom: 4px; }
+        .fb-sugestao-problema { color: var(--text-light); font-size: 0.9em; margin-bottom: 8px; }
+        .fb-sugestao-solucao  { color: var(--primary); font-size: 0.9em; }
+        .fb-sugestao-impacto  { color: var(--text-light); font-size: 0.85em; margin-top: 4px; }
+
+        .fb-pattern-block {
+            background: var(--light);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        .fb-textos-errados-block {
+            background: rgba(239,68,68,0.08);
+            padding: 16px;
+            border-radius: 12px;
+        }
+        .fb-texto-errado {
+            margin-top: 8px;
+            padding: 8px;
+            background: var(--white);
+            border-radius: 6px;
+            border-left: 3px solid var(--danger);
+        }
+        .fb-texto-errado-title { font-size: 0.9em; }
+        .fb-texto-errado-meta  { font-size: 0.85em; color: var(--text-light); margin-top: 4px; }
+
+        .fb-item {
+            background: var(--light);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border-left: 4px solid;
+        }
+        .fb-item.correto { border-color: var(--success); }
+        .fb-item.errado  { border-color: var(--danger); }
+        .fb-item-header  { font-weight: 600; margin-bottom: 4px; }
+        .fb-item-meta    { font-size: 0.9em; color: var(--text-light); margin-bottom: 8px; }
+        .fb-item-obs {
+            font-size: 0.85em;
+            background: var(--white);
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            border-left: 2px solid var(--warning);
+        }
+        .fb-item-date { font-size: 0.8em; color: var(--text-light); }
+
+        /* ── Filtro de data ── */
+        .fb-filter-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .fb-date-input {
+            padding: 8px 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.88em;
+            background: var(--light);
+            color: var(--text);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .fb-date-input:focus { outline: none; border-color: var(--primary); }
+        body.dark-mode .fb-date-input {
+            background: #3a3a4e;
+            border-color: #4a4a5e;
+            color: #e0e0e0;
+            color-scheme: dark;
+        }
+        .fb-filter-sep { color: var(--text-light); font-size: 0.85em; }
+
+        /* ── Stats melhoradas ── */
+        .stats-total-card {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .stats-total-number { font-size: 2.5em; font-weight: bold; color: var(--primary); }
+        .stats-total-label  { font-size: 1.1em; color: var(--text-light); margin-top: 8px; }
+        .stats-section-title { margin-bottom: 16px; font-size: 1.05em; font-weight: 700; }
+        .stats-risco-item {
+            background: var(--light);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        .stats-risco-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .stats-risco-label { font-weight: 600; font-size: 0.95em; }
+        .stats-risco-meta  { display: flex; align-items: center; gap: 8px; }
+        .stats-risco-pct   { font-weight: 700; font-size: 0.9em; }
+        .stats-risco-badge {
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 700;
+        }
+        .stats-bar-track {
+            background: var(--border);
+            border-radius: 8px;
+            height: 22px;
+            overflow: hidden;
+        }
+        .stats-bar-fill {
+            height: 100%;
+            border-radius: 8px;
+            width: 0%;
+            transition: width 0.7s cubic-bezier(.4,0,.2,1);
+        }
+
     </style>
 </head>
 <body>
@@ -1058,6 +1351,7 @@
                     <div class="textarea-wrap" id="textaraWrap">
                         <label for="texto">Cole o texto a analisar:</label>
                         <textarea id="texto" placeholder="Cole aqui uma manchete, notícia ou post..."></textarea>
+                        <div class="char-counter" id="charCounter">0 caracteres</div>
                     </div>
 
                     <!-- Input de URL -->
@@ -1092,6 +1386,12 @@
                 
                 <!-- Skeleton loader -->
                 <div id="skeletonLoader">
+                    <div class="progress-steps" id="progressSteps">
+                        <div class="progress-step" id="step-1"><span class="progress-step-dot"></span>Recebendo texto...</div>
+                        <div class="progress-step" id="step-2"><span class="progress-step-dot"></span>Identificando sinais de alerta...</div>
+                        <div class="progress-step" id="step-3"><span class="progress-step-dot"></span>Consultando modelo de IA...</div>
+                        <div class="progress-step" id="step-4"><span class="progress-step-dot"></span>Gerando análise detalhada...</div>
+                    </div>
                     <div class="skeleton skeleton-badge"></div>
                     <div class="skeleton skeleton-line medium"></div>
                     <div class="skeleton skeleton-line long"></div>
@@ -1167,8 +1467,23 @@
                             <textarea class="feedback-obs" id="feedbackObs" placeholder="Por quê? (opcional)"></textarea>
                             <button class="feedback-send" id="feedbackSend" onclick="enviarFeedback()">Enviar feedback</button>
                         </div>
-                        <button class="btn-copy" id="btnCopiar" onclick="copiarResultado()">Copiar resultado</button>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button class="btn-share" id="btnCompartilhar" onclick="compartilharResultado()">↗ Compartilhar</button>
+                            <button class="btn-copy" id="btnCopiar" onclick="copiarResultado()">Copiar resultado</button>
+                        </div>
                     </div>
+                </div>
+
+                <!-- Histórico local -->
+                <div class="history-section" id="historySection">
+                    <div class="history-header" onclick="toggleHistorico()">
+                        <h4>🕓 Histórico recente</h4>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <button class="history-clear-btn" onclick="event.stopPropagation(); limparHistorico()">Limpar</button>
+                            <span class="history-toggle-icon" id="historyToggleIcon">▼</span>
+                        </div>
+                    </div>
+                    <div class="history-list" id="historyList"></div>
                 </div>
             </div>
         </div>
@@ -1180,27 +1495,27 @@
                     <button class="btn-secondary" onclick="logout()" style="padding: 8px 16px; font-size: 0.9em;">🚪 Sair</button>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin: 20px 0;">
-                    <div style="background: var(--light); padding: 16px; border-radius: 12px;">
-                        <div style="font-size: 2em; font-weight: bold; color: var(--primary);" id="fb-total">0</div>
-                        <div style="color: var(--text-light); font-size: 0.9em;">Total de Feedbacks</div>
+                <div class="fb-stats-grid">
+                    <div class="fb-stat-card">
+                        <div class="fb-stat-number" style="color:var(--primary)" id="fb-total">0</div>
+                        <div class="fb-stat-label">Total de Feedbacks</div>
                     </div>
-                    <div style="background: var(--light); padding: 16px; border-radius: 12px;">
-                        <div style="font-size: 2em; font-weight: bold; color: var(--success);" id="fb-corretos">0</div>
-                        <div style="color: var(--text-light); font-size: 0.9em;">Análises Corretas</div>
+                    <div class="fb-stat-card">
+                        <div class="fb-stat-number" style="color:var(--success)" id="fb-corretos">0</div>
+                        <div class="fb-stat-label">Análises Corretas</div>
                     </div>
-                    <div style="background: var(--light); padding: 16px; border-radius: 12px;">
-                        <div style="font-size: 2em; font-weight: bold; color: var(--danger);" id="fb-errados">0</div>
-                        <div style="color: var(--text-light); font-size: 0.9em;">Análises Erradas</div>
+                    <div class="fb-stat-card">
+                        <div class="fb-stat-number" style="color:var(--danger)" id="fb-errados">0</div>
+                        <div class="fb-stat-label">Análises Erradas</div>
                     </div>
-                    <div style="background: var(--light); padding: 16px; border-radius: 12px;">
-                        <div style="font-size: 2em; font-weight: bold; color: var(--warning);" id="fb-taxa">0%</div>
-                        <div style="color: var(--text-light); font-size: 0.9em;">Taxa de Acerto</div>
+                    <div class="fb-stat-card">
+                        <div class="fb-stat-number" style="color:var(--warning)" id="fb-taxa">0%</div>
+                        <div class="fb-stat-label">Taxa de Acerto</div>
                     </div>
                 </div>
 
                 <h3 style="margin-top: 30px; margin-bottom: 16px;">Acurácia por Tipo de Risco</h3>
-                <div id="fb-acuracia-container" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 30px;"></div>
+                <div class="fb-acuracia-grid" id="fb-acuracia-container"></div>
 
                 <h3 style="margin-bottom: 16px;">Sugestões de Melhoria</h3>
                 <div id="fb-suggestions" style="margin-bottom: 30px;"></div>
@@ -1208,11 +1523,18 @@
                 <h3 style="margin-bottom: 16px;">Padrões de Erro Detectados</h3>
                 <div id="fb-patterns" style="margin-bottom: 30px;"></div>
 
-                <h3 style="margin-bottom: 16px;">Lista de Feedbacks</h3>
+                <h3 style="margin-bottom: 12px;">Lista de Feedbacks</h3>
+                <div class="fb-filter-row">
+                    <input type="date" class="fb-date-input" id="fbDateDe" title="A partir de">
+                    <span class="fb-filter-sep">até</span>
+                    <input type="date" class="fb-date-input" id="fbDateAte" title="Até">
+                    <button class="btn-secondary" style="padding:7px 14px;font-size:0.85em;" onclick="carregarFeedbacks(fbFiltroAtual)">Filtrar</button>
+                    <button class="btn-secondary" style="padding:7px 14px;font-size:0.85em;" onclick="limparFiltroData()">✕</button>
+                </div>
                 <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-                    <button class="btn-secondary" onclick="carregarFeedbacks('todos')">Todos</button>
-                    <button class="btn-secondary" onclick="carregarFeedbacks('corretos')">✅ Corretos</button>
-                    <button class="btn-secondary" onclick="carregarFeedbacks('errados')">❌ Errados</button>
+                    <button class="btn-secondary" onclick="setFbFiltro('todos')">Todos</button>
+                    <button class="btn-secondary" onclick="setFbFiltro('corretos')">✅ Corretos</button>
+                    <button class="btn-secondary" onclick="setFbFiltro('errados')">❌ Errados</button>
                 </div>
                 <div id="fb-lista"></div>
             </div>
@@ -1373,111 +1695,106 @@
             mudarAba('analise', document.querySelector('.tab-button.active'));
         }
 
+        let fbFiltroAtual = 'todos';
+
+        function setFbFiltro(tipo) {
+            fbFiltroAtual = tipo;
+            carregarFeedbacks(tipo);
+        }
+
+        function limparFiltroData() {
+            document.getElementById('fbDateDe').value  = '';
+            document.getElementById('fbDateAte').value = '';
+            carregarFeedbacks(fbFiltroAtual);
+        }
+
         // CARREGAR FEEDBACKS COM AUTENTICAÇÃO
         async function carregarFeedbacks(tipo = 'todos', token = null) {
             try {
-                // Se não tiver token, tenta do localStorage
-                if (!token) {
-                    token = localStorage.getItem('feedbacksToken');
-                }
+                if (!token) token = localStorage.getItem('feedbacksToken');
+                if (!token) { mostrarErroAuth('Não autenticado'); return; }
 
-                if (!token) {
-                    mostrarErroAuth('Não autenticado');
-                    return;
-                }
-
-                // Carregar stats
+                // ── Stats ──
                 const statsResp = await fetch(`${API_URL}/feedbacks/stats?senha=${encodeURIComponent(token)}`);
-                if (statsResp.status === 401) {
-                    logout();
-                    mostrarErroAuth('Sessão expirada. Faça login novamente.');
-                    return;
-                }
+                if (statsResp.status === 401) { logout(); mostrarErroAuth('Sessão expirada.'); return; }
                 const stats = await statsResp.json();
-                
-                document.getElementById('fb-total').textContent = stats.analisesComFeedback || 0;
-                document.getElementById('fb-corretos').textContent = stats.feedbackCorretos || 0;
-                document.getElementById('fb-errados').textContent = stats.feedbackErrados || 0;
-                document.getElementById('fb-taxa').textContent = stats.taxaAcerto + '%' || '0%';
 
-                // Acurácia por risco
-                const acuraciaHTML = stats.acuraciasPorRisco.map(a => `
-                    <div style="background: var(--light); padding: 16px; border-radius: 12px;">
-                        <div style="font-weight: 600; text-transform: capitalize; margin-bottom: 8px;">${a.risco}</div>
-                        <div style="font-size: 1.5em; font-weight: bold; color: ${a.taxa >= 70 ? 'var(--success)' : a.taxa >= 50 ? 'var(--warning)' : 'var(--danger)'};">${a.taxa.toFixed(1)}%</div>
-                        <div style="font-size: 0.85em; color: var(--text-light);">${a.corretos} de ${a.total} corretos</div>
+                document.getElementById('fb-total').textContent    = stats.analisesComFeedback || 0;
+                document.getElementById('fb-corretos').textContent = stats.feedbackCorretos || 0;
+                document.getElementById('fb-errados').textContent  = stats.feedbackErrados || 0;
+                document.getElementById('fb-taxa').textContent     = (stats.taxaAcerto || 0) + '%';
+
+                // ── Acurácia por risco ──
+                const acuraciaHTML = (stats.acuraciasPorRisco || []).map(a => `
+                    <div class="fb-acuracia-card">
+                        <div class="fb-acuracia-risco">${a.risco}</div>
+                        <div class="fb-acuracia-taxa" style="color:${a.taxa >= 70 ? 'var(--success)' : a.taxa >= 50 ? 'var(--warning)' : 'var(--danger)'};">${a.taxa.toFixed(1)}%</div>
+                        <div class="fb-acuracia-detalhe">${a.corretos} de ${a.total} corretos</div>
                     </div>
                 `).join('');
                 document.getElementById('fb-acuracia-container').innerHTML = acuraciaHTML || '<p>Sem dados</p>';
 
-                // Sugestões
-                const sugResp = await fetch(`${API_URL}/feedbacks/suggestions?senha=${encodeURIComponent(token)}`);
+                // ── Sugestões ──
+                const sugResp   = await fetch(`${API_URL}/feedbacks/suggestions?senha=${encodeURIComponent(token)}`);
                 const suggestions = await sugResp.json();
-                
-                const sugHTML = suggestions.sugestoes.map(s => `
-                    <div style="background: ${s.tipo === 'FALSO POSITIVO' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)'}; border-left: 4px solid ${s.tipo === 'FALSO POSITIVO' ? 'var(--danger)' : 'var(--warning)'}; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
-                        <div style="font-weight: 600; margin-bottom: 4px;">${s.tipo || s.info}</div>
-                        ${s.problema ? `<div style="color: var(--text-light); font-size: 0.9em; margin-bottom: 8px;">${s.problema}</div>` : ''}
-                        ${s.solucao ? `<div style="color: var(--primary); font-size: 0.9em;">💡 ${s.solucao}</div>` : ''}
-                        ${s.impacto ? `<div style="color: var(--text-light); font-size: 0.85em; margin-top: 4px;">${s.impacto}</div>` : ''}
+                const sugHTML = (suggestions.sugestoes || []).map(s => `
+                    <div class="fb-sugestao-card ${s.tipo === 'FALSO POSITIVO' ? 'fp' : 'fn'}">
+                        <div class="fb-sugestao-tipo">${s.tipo || s.info}</div>
+                        ${s.problema ? `<div class="fb-sugestao-problema">${s.problema}</div>` : ''}
+                        ${s.solucao  ? `<div class="fb-sugestao-solucao">💡 ${s.solucao}</div>` : ''}
+                        ${s.impacto  ? `<div class="fb-sugestao-impacto">${s.impacto}</div>` : ''}
                     </div>
                 `).join('');
                 document.getElementById('fb-suggestions').innerHTML = sugHTML || '<p>Nenhuma sugestão no momento</p>';
 
-                // Padrões
-                const patResp = await fetch(`${API_URL}/feedbacks/patterns?senha=${encodeURIComponent(token)}`);
+                // ── Padrões ──
+                const patResp  = await fetch(`${API_URL}/feedbacks/patterns?senha=${encodeURIComponent(token)}`);
                 const patterns = await patResp.json();
-                
                 let patHTML = '';
+
                 if (patterns.riscosComMaiorErro && Object.keys(patterns.riscosComMaiorErro).length > 0) {
-                    patHTML = '<div style="background: var(--light); padding: 16px; border-radius: 12px; margin-bottom: 12px;">';
-                    patHTML += '<strong>Maior Quantidade de Erros Por Risco:</strong><br>';
-                    for (const [risco, count] of Object.entries(patterns.riscosComMaiorErro)) {
-                        patHTML += `<div style="margin-top: 8px;">🔴 <strong>${risco}:</strong> ${count} erros</div>`;
-                    }
-                    patHTML += '</div>';
+                    const erroItems = Object.entries(patterns.riscosComMaiorErro)
+                        .map(([risco, count]) => `<div class="fb-pattern-erro-item">🔴 <strong>${risco}:</strong> ${count} erros</div>`)
+                        .join('');
+                    patHTML += `<div class="fb-pattern-block"><strong>Maior Quantidade de Erros Por Risco:</strong>${erroItems}</div>`;
                 }
-                
+
                 if (patterns.textosMaisErrados && patterns.textosMaisErrados.length > 0) {
-                    patHTML += '<div style="background: rgba(239, 68, 68, 0.08); padding: 16px; border-radius: 12px;">';
-                    patHTML += '<strong>Textos Mais Frequentemente Marcados como Errados:</strong>';
-                    patterns.textosMaisErrados.forEach((t, i) => {
-                        patHTML += `<div style="margin-top: 8px; padding: 8px; background: white; border-radius: 6px; border-left: 3px solid var(--danger);">
-                            <div style="font-size: 0.9em;"><strong>${t.texto}...</strong></div>
-                            <div style="font-size: 0.85em; color: var(--text-light); margin-top: 4px;">Risco: ${t.risco} | Obs: ${t.observacao || 'Sem observações'}</div>
-                        </div>`;
-                    });
-                    patHTML += '</div>';
+                    const erradosItems = patterns.textosMaisErrados.map(t => `
+                        <div class="fb-texto-errado">
+                            <div class="fb-texto-errado-title"><strong>${t.texto}...</strong></div>
+                            <div class="fb-texto-errado-meta">Risco: ${t.risco} | Obs: ${t.observacao || 'Sem observações'}</div>
+                        </div>
+                    `).join('');
+                    patHTML += `<div class="fb-textos-errados-block"><strong>Textos Mais Frequentemente Marcados como Errados:</strong>${erradosItems}</div>`;
                 }
-                
+
                 document.getElementById('fb-patterns').innerHTML = patHTML || '<p>Nenhum padrão detectado</p>';
 
-                // Lista de feedbacks
+                // ── Lista com filtro de data ──
                 let filtroCorreto = null;
                 if (tipo === 'corretos') filtroCorreto = 'true';
-                if (tipo === 'errados') filtroCorreto = 'false';
+                if (tipo === 'errados')  filtroCorreto = 'false';
 
-                const fbResp = await fetch(`${API_URL}/feedbacks?correto=${filtroCorreto || ''}&limit=50&senha=${encodeURIComponent(token)}`);
+                const de  = document.getElementById('fbDateDe')?.value  || '';
+                const ate = document.getElementById('fbDateAte')?.value || '';
+                let fbUrl = `${API_URL}/feedbacks?correto=${filtroCorreto || ''}&limit=50&senha=${encodeURIComponent(token)}`;
+                if (de)  fbUrl += `&de=${de}`;
+                if (ate) fbUrl += `&ate=${ate}`;
+
+                const fbResp = await fetch(fbUrl);
                 const fbData = await fbResp.json();
 
-                const fbHTML = fbData.feedbacks.map(fb => `
-                    <div style="background: var(--light); padding: 16px; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid ${fb.avaliacaoCorreta ? 'var(--success)' : 'var(--danger)'};">
-                        <div style="display: flex; justify-content: space-between; align-items: start; gap: 16px;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; margin-bottom: 4px;">
-                                    ${fb.avaliacaoCorreta ? '✅' : '❌'} "${fb.texto}"
-                                </div>
-                                <div style="font-size: 0.9em; color: var(--text-light); margin-bottom: 8px;">
-                                    Análise: <strong style="text-transform: uppercase;">${fb.risco}</strong> (${fb.percentualRisco}%) | ${fb.sinais.length} sinais
-                                </div>
-                                ${fb.observacoes ? `<div style="font-size: 0.85em; background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px; border-left: 2px solid var(--warning);">📝 ${fb.observacoes}</div>` : ''}
-                                <div style="font-size: 0.8em; color: var(--text-light);">📅 ${new Date(fb.dataFeedback).toLocaleDateString('pt-BR')}</div>
-                            </div>
-                        </div>
+                const fbHTML = (fbData.feedbacks || []).map(fb => `
+                    <div class="fb-item ${fb.avaliacaoCorreta ? 'correto' : 'errado'}">
+                        <div class="fb-item-header">${fb.avaliacaoCorreta ? '✅' : '❌'} "${fb.texto}"</div>
+                        <div class="fb-item-meta">Análise: <strong>${(fb.risco || '').toUpperCase()}</strong> (${fb.percentualRisco || 0}%) | ${(fb.sinais || []).length} sinais</div>
+                        ${fb.observacoes ? `<div class="fb-item-obs">📝 ${fb.observacoes}</div>` : ''}
+                        <div class="fb-item-date">📅 ${new Date(fb.dataFeedback).toLocaleDateString('pt-BR')}</div>
                     </div>
                 `).join('');
 
-                document.getElementById('fb-lista').innerHTML = fbHTML || '<p>Nenhum feedback neste filtro</p>';
+                document.getElementById('fb-lista').innerHTML = fbHTML || '<p style="color:var(--text-light);padding:12px 0;">Nenhum feedback neste filtro.</p>';
 
             } catch (error) {
                 console.error('Erro ao carregar feedbacks:', error);
@@ -1517,21 +1834,25 @@
             limparMensagens();
         }
 
+        let urlDebounceTimer = null;
         function onUrlInput() {
-            const val = document.getElementById('urlInput').value.trim();
-            const preview = document.getElementById('urlPreview');
-            const previewText = document.getElementById('urlPreviewText');
-            const btnLimpar = document.getElementById('btnLimpar');
-            if (val.startsWith('http')) {
-                try {
-                    const u = new URL(val);
-                    previewText.textContent = u.hostname + u.pathname.substring(0, 40);
-                    preview.classList.add('show');
-                } catch { preview.classList.remove('show'); }
-            } else {
-                preview.classList.remove('show');
-            }
-            btnLimpar.disabled = val === '';
+            if (urlDebounceTimer) clearTimeout(urlDebounceTimer);
+            urlDebounceTimer = setTimeout(() => {
+                const val = document.getElementById('urlInput').value.trim();
+                const preview = document.getElementById('urlPreview');
+                const previewText = document.getElementById('urlPreviewText');
+                const btnLimpar = document.getElementById('btnLimpar');
+                if (val.startsWith('http')) {
+                    try {
+                        const u = new URL(val);
+                        previewText.textContent = u.hostname + u.pathname.substring(0, 40);
+                        preview.classList.add('show');
+                    } catch { preview.classList.remove('show'); }
+                } else {
+                    preview.classList.remove('show');
+                }
+                btnLimpar.disabled = val === '';
+            }, 300);
         }
 
         async function analisarTexto() {
@@ -1549,20 +1870,24 @@
             btnAnalisar.disabled = true;
             spinner.style.display = 'inline-block';
             btnText.style.display = 'none';
+            iniciarProgressSteps();
 
             try {
                 let response;
+                let textoParaHistorico = '';
 
                 if (modoInput === 'site') {
                     const url = document.getElementById('urlInput').value.trim();
                     if (!url || !url.startsWith('http')) {
                         skeleton.style.display = 'none';
+                        pararProgressSteps();
                         btnAnalisar.disabled = false;
                         spinner.style.display = 'none';
                         btnText.style.display = 'inline';
                         mostrarErro('Digite uma URL válida (ex: https://exemplo.com).');
                         return;
                     }
+                    textoParaHistorico = url;
                     response = await fetch(`${API_URL}/analisar-url`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1572,12 +1897,14 @@
                     const texto = document.getElementById('texto').value.trim();
                     if (!texto || texto.length < 20) {
                         skeleton.style.display = 'none';
+                        pararProgressSteps();
                         btnAnalisar.disabled = false;
                         spinner.style.display = 'none';
                         btnText.style.display = 'inline';
                         mostrarErro('O texto deve ter pelo menos 20 caracteres.');
                         return;
                     }
+                    textoParaHistorico = texto;
                     response = await fetch(`${API_URL}/analisar`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1598,12 +1925,15 @@
                     throw new Error(resultado.erro || 'Erro ao analisar');
                 }
 
+                pararProgressSteps();
                 skeleton.style.display = 'none';
                 analiseAtualId = resultado._id || resultado.id || null;
                 mostrarResultados(resultado);
                 marcarQueJaUsouFerramenta();
+                salvarHistorico(resultado, textoParaHistorico);
 
             } catch (error) {
+                pararProgressSteps();
                 document.getElementById('skeletonLoader').style.display = 'none';
                 mostrarErro(`Erro: ${error.message}`);
             } finally {
@@ -1797,30 +2127,50 @@
                 if (!response.ok) throw new Error('Erro ao carregar');
 
                 const stats = await response.json();
+                const total = stats.totalAnalises || 0;
 
-                const riscoStats = stats.porRisco.map(r => `
-                    <div style="margin: 16px 0; padding: 16px; background: var(--light); border-radius: 8px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                            <strong style="text-transform: capitalize;">${r._id || 'Sem classificação'}</strong>
-                            <span style="background: ${r._id === 'baixo' ? '#10b981' : r._id === 'medio' ? '#f59e0b' : '#ef4444'}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9em; font-weight: bold;">${r.quantidade} análises</span>
+                const riscoMap = {
+                    baixo: { cor: '#10b981', label: 'Baixo' },
+                    medio: { cor: '#f59e0b', label: 'Médio' },
+                    alto:  { cor: '#ef4444', label: 'Alto'  }
+                };
+
+                const riscoStats = (stats.porRisco || []).map(r => {
+                    const pct  = total > 0 ? Math.round((r.quantidade / total) * 100) : 0;
+                    const info = riscoMap[r._id] || { cor: '#94a3b8', label: r._id || '?' };
+                    return `
+                        <div class="stats-risco-item">
+                            <div class="stats-risco-header">
+                                <span class="stats-risco-label">${info.label}</span>
+                                <div class="stats-risco-meta">
+                                    <span class="stats-risco-pct" style="color:${info.cor}">${pct}%</span>
+                                    <span class="stats-risco-badge" style="background:${info.cor}">${r.quantidade} análise${r.quantidade !== 1 ? 's' : ''}</span>
+                                </div>
+                            </div>
+                            <div class="stats-bar-track">
+                                <div class="stats-bar-fill" data-w="${pct}" style="background:${info.cor};"></div>
+                            </div>
                         </div>
-                        <div style="background: var(--border); border-radius: 8px; height: 24px; overflow: hidden;">
-                            <div style="width: ${stats.totalAnalises > 0 ? (r.quantidade / stats.totalAnalises) * 100 : 0}%; height: 100%; background: ${r._id === 'baixo' ? '#10b981' : r._id === 'medio' ? '#f59e0b' : '#ef4444'}; transition: width 0.3s ease;"></div>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
 
                 document.getElementById('statsContainer').innerHTML = `
-                    <div style="margin-bottom: 24px;">
-                        <div style="background: var(--light); padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px;">
-                            <div style="font-size: 2.5em; font-weight: bold; color: var(--primary);">${stats.totalAnalises || 0}</div>
-                            <div style="font-size: 1.1em; color: var(--text-light); margin-top: 8px;">Análises Realizadas</div>
-                        </div>
-
-                        <h3 style="margin-bottom: 16px;">Distribuição de Risco:</h3>
-                        ${riscoStats}
+                    <div class="stats-total-card">
+                        <div class="stats-total-number">${total}</div>
+                        <div class="stats-total-label">Análises Realizadas</div>
                     </div>
+                    <h3 class="stats-section-title">Distribuição de Risco</h3>
+                    ${riscoStats || '<p style="color:var(--text-light)">Nenhuma análise ainda.</p>'}
                 `;
+
+                // Animar barras após render
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        document.querySelectorAll('.stats-bar-fill').forEach(el => {
+                            el.style.width = (el.dataset.w || 0) + '%';
+                        });
+                    }, 60);
+                });
 
             } catch (error) {
                 document.getElementById('statsContainer').innerHTML = '<p style="color: var(--danger);">Erro ao carregar estatísticas.</p>';
@@ -1905,9 +2255,140 @@
             });
         }
 
+        // ── Progress Steps ──
+        let progressInterval = null;
+        const PROGRESS_STEPS = ['step-1','step-2','step-3','step-4'];
+
+        function iniciarProgressSteps() {
+            let current = 0;
+            PROGRESS_STEPS.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.className = 'progress-step';
+            });
+            function advance() {
+                if (current > 0) {
+                    const prev = document.getElementById(PROGRESS_STEPS[current - 1]);
+                    if (prev) prev.className = 'progress-step done';
+                }
+                if (current < PROGRESS_STEPS.length) {
+                    const curr = document.getElementById(PROGRESS_STEPS[current]);
+                    if (curr) curr.className = 'progress-step active';
+                    current++;
+                }
+            }
+            advance();
+            progressInterval = setInterval(advance, 1800);
+        }
+
+        function pararProgressSteps() {
+            if (progressInterval) { clearInterval(progressInterval); progressInterval = null; }
+            PROGRESS_STEPS.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.className = 'progress-step done';
+            });
+        }
+
+        // ── Histórico local ──
+        const HIST_KEY = 'vt_historico';
+        const HIST_MAX = 10;
+
+        function salvarHistorico(resultado, textoOriginal) {
+            const historico = JSON.parse(localStorage.getItem(HIST_KEY) || '[]');
+            const item = {
+                id: Date.now(),
+                texto: textoOriginal.substring(0, 80),
+                risco: resultado.risco,
+                percentual: resultado.percentualRisco,
+                data: new Date().toISOString(),
+                resultado
+            };
+            historico.unshift(item);
+            if (historico.length > HIST_MAX) historico.splice(HIST_MAX);
+            localStorage.setItem(HIST_KEY, JSON.stringify(historico));
+            renderizarHistorico();
+        }
+
+        function renderizarHistorico() {
+            const historico = JSON.parse(localStorage.getItem(HIST_KEY) || '[]');
+            const section   = document.getElementById('historySection');
+            const lista     = document.getElementById('historyList');
+            if (!section || !lista) return;
+
+            if (historico.length === 0) { section.style.display = 'none'; return; }
+            section.style.display = 'block';
+
+            lista.innerHTML = historico.map(item => {
+                const rn  = normalizarRisco(item.risco);
+                const cor = rn === 'low' ? '#10b981' : rn === 'medium' ? '#f59e0b' : '#ef4444';
+                const lbl = rn === 'low' ? 'BAIXO'   : rn === 'medium' ? 'MÉDIO'   : 'ALTO';
+                const dt  = new Date(item.data).toLocaleDateString('pt-BR');
+                return `<div class="history-item" onclick="recarregarDoHistorico(${item.id})">
+                    <span class="history-item-text">${item.texto}</span>
+                    <span class="history-item-badge" style="background:${cor}">${lbl}</span>
+                    <span class="history-item-date">${dt}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function recarregarDoHistorico(id) {
+            const historico = JSON.parse(localStorage.getItem(HIST_KEY) || '[]');
+            const item = historico.find(h => h.id === id);
+            if (!item) return;
+            document.getElementById('texto').value = item.texto;
+            analiseAtualId = null;
+            mostrarResultados(item.resultado);
+            document.getElementById('resultados').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function toggleHistorico() {
+            document.getElementById('historyList').classList.toggle('open');
+            document.getElementById('historyToggleIcon').classList.toggle('open');
+        }
+
+        function limparHistorico() {
+            localStorage.removeItem(HIST_KEY);
+            document.getElementById('historySection').style.display = 'none';
+        }
+
+        // ── Compartilhar resultado ──
+        function compartilharResultado() {
+            const titulo      = document.getElementById('riskTitle').textContent;
+            const percentual  = document.getElementById('riskPercentage').textContent;
+            const descricao   = document.getElementById('riskDescription').textContent;
+            const analise     = document.getElementById('explanation').textContent;
+            const btn         = document.getElementById('btnCompartilhar');
+
+            const texto = `🔍 VeriTexto — Análise de Desinformação\n\n${titulo} (${percentual})\n${descricao}\n\n${analise}\n\nhttps://veritexto.com.br`;
+
+            if (navigator.share) {
+                navigator.share({ title: 'VeriTexto', text: texto }).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(texto).then(() => {
+                    btn.textContent = '✓ Copiado!';
+                    btn.classList.add('shared');
+                    setTimeout(() => { btn.textContent = '↗ Compartilhar'; btn.classList.remove('shared'); }, 2000);
+                }).catch(() => {
+                    btn.textContent = 'Erro ao copiar';
+                    setTimeout(() => { btn.textContent = '↗ Compartilhar'; }, 2000);
+                });
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             esconderExemplosSeJaUsou();
-            document.getElementById('texto').addEventListener('input', function () {
+            renderizarHistorico();
+
+            const textoEl = document.getElementById('texto');
+
+            // Contador de caracteres
+            textoEl.addEventListener('input', function () {
+                const len     = this.value.length;
+                const counter = document.getElementById('charCounter');
+                counter.textContent = `${len} caractere${len !== 1 ? 's' : ''}`;
+                counter.className   = 'char-counter';
+                if (len > 1800)      counter.classList.add('limit');
+                else if (len > 1200) counter.classList.add('warn');
+
                 if (modoInput === 'texto') document.getElementById('btnLimpar').disabled = this.value.trim() === '';
             });
         });
