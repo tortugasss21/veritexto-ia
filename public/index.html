@@ -615,6 +615,11 @@
         body.dark-mode {
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d3d 100%);
             color: #e0e0e0;
+            --light: #3a3a4e;
+            --text: #e0e0e0;
+            --text-light: #a0a0b0;
+            --border: #4a4a5e;
+            --white: #2a2a3e;
         }
 
         body.dark-mode .card {
@@ -1799,7 +1804,7 @@
                             <strong style="text-transform: capitalize;">${r._id || 'Sem classificação'}</strong>
                             <span style="background: ${r._id === 'baixo' ? '#10b981' : r._id === 'medio' ? '#f59e0b' : '#ef4444'}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9em; font-weight: bold;">${r.quantidade} análises</span>
                         </div>
-                        <div style="background: #e0e0e0; border-radius: 8px; height: 24px; overflow: hidden;">
+                        <div style="background: var(--border); border-radius: 8px; height: 24px; overflow: hidden;">
                             <div style="width: ${stats.totalAnalises > 0 ? (r.quantidade / stats.totalAnalises) * 100 : 0}%; height: 100%; background: ${r._id === 'baixo' ? '#10b981' : r._id === 'medio' ? '#f59e0b' : '#ef4444'}; transition: width 0.3s ease;"></div>
                         </div>
                     </div>
