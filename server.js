@@ -367,30 +367,19 @@ async function pesquisarNoGoogle(query) {
   }
 }
 
-// Extrai queries de busca relevantes do texto
-function extrairQueriesDeBusca(texto) {
-  const queries = [];
+// Extrai a query mais relevante do texto (apenas 1 busca por análise)
+function extrairQueryPrincipal(texto) {
   const t = texto.trim();
 
-  // Query 1: primeiras palavras-chave do texto (pessoas, instituições, evento)
-  const primeirasFrases = t.split(/[.!?]/)[0].substring(0, 120);
-  queries.push(primeirasFrases);
-
-  // Query 2: busca por nomes próprios + instituições detectadas
+  // Prioridade 1: nome próprio + instituição (mais específico e verificável)
   const nomeProprio = t.match(/\b[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][a-záéíóúàâêôãõç]+ [A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][a-záéíóúàâêôãõç]+\b/);
-  const instituicaoMatch = t.match(/\b(IBGE|IPEA|Inmet|TSE|STF|Banco Central|Copom|Anvisa|Petrobras|Nvidia|Fiocruz|OMS|CAGED|Embrapa)\b/i);
+  const instituicaoMatch = t.match(/\b(IBGE|IPEA|Inmet|TSE|STF|Banco Central|Copom|Anvisa|Petrobras|Nvidia|Fiocruz|OMS|CAGED|Embrapa|Selic|Receita Federal)\b/i);
   if (nomeProprio && instituicaoMatch) {
-    queries.push(`${nomeProprio[0]} ${instituicaoMatch[0]}`);
+    return `${nomeProprio[0]} ${instituicaoMatch[0]}`;
   }
 
-  // Query 3: números + contexto (recorde, taxa, percentual)
-  const dadoNumerico = t.match(/\d+[,.]?\d*\s*(%|°C|bilh[õo]es|milh[õo]es|reais)/i);
-  if (dadoNumerico) {
-    const contexto = t.substring(Math.max(0, t.indexOf(dadoNumerico[0]) - 40), t.indexOf(dadoNumerico[0]) + 60);
-    queries.push(contexto.trim());
-  }
-
-  return queries.filter(Boolean).slice(0, 3);
+  // Prioridade 2: evento/fato principal (primeira frase até 100 chars)
+  return t.split(/[.!?]/)[0].substring(0, 100).trim();
 }
 
 function formatarResultadosBusca(resultados, query) {
@@ -572,17 +561,10 @@ RESPOSTA ESPERADA (JSON):
     // ===================== ETAPA 1: PESQUISA REAL NO GOOGLE (SERPER) =====================
     let contextoVerificacao = 'Pesquisa web indisponível nesta análise.';
     try {
-      const queries = extrairQueriesDeBusca(texto);
-      const resultadosBusca = await Promise.all(queries.map(q => pesquisarNoGoogle(q)));
-
-      const trechosBusca = queries.map((q, i) =>
-        formatarResultadosBusca(resultadosBusca[i], q)
-      ).join('\n\n');
-
-      if (trechosBusca.trim()) {
-        contextoVerificacao = trechosBusca;
-        console.log(`[Serper] ${queries.length} busca(s) realizada(s)`);
-      }
+      const query = extrairQueryPrincipal(texto);
+      const resultados = await pesquisarNoGoogle(query);
+      contextoVerificacao = formatarResultadosBusca(resultados, query);
+      console.log(`[Serper] Busca: "${query}"`);
     } catch (errPesquisa) {
       console.warn('Serper falhou, continuando sem ela:', errPesquisa.message);
     }
@@ -824,19 +806,10 @@ RESPOSTA ESPERADA (JSON):
     // ===================== ETAPA 1: PESQUISA REAL NO GOOGLE (SERPER) =====================
     let contextoVerificacaoUrl = 'Pesquisa web indisponível nesta análise.';
     try {
-      const queries = extrairQueriesDeBusca(texto);
-      // Adiciona query específica sobre o domínio de origem
-      queries.push(`site:${urlObj.hostname} OR "${urlObj.hostname}"`);
-
-      const resultadosBusca = await Promise.all(queries.map(q => pesquisarNoGoogle(q)));
-      const trechosBusca = queries.map((q, i) =>
-        formatarResultadosBusca(resultadosBusca[i], q)
-      ).join('\n\n');
-
-      if (trechosBusca.trim()) {
-        contextoVerificacaoUrl = trechosBusca;
-        console.log(`[Serper URL] ${queries.length} busca(s) realizada(s) para ${urlObj.hostname}`);
-      }
+      const query = extrairQueryPrincipal(texto);
+      const resultados = await pesquisarNoGoogle(query);
+      contextoVerificacaoUrl = formatarResultadosBusca(resultados, query);
+      console.log(`[Serper URL] Busca: "${query}" — domínio: ${urlObj.hostname}`);
     } catch (errPesquisa) {
       console.warn('Serper (URL) falhou:', errPesquisa.message);
     }
