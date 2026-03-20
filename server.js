@@ -473,32 +473,33 @@ function normalizarResultado(resultado, textoOriginal = '') {
 // em vez de retornar um resultado genérico inútil
 // ===================== SERPER — BUSCA REAL NO GOOGLE =====================
 async function pesquisarNoGoogle(query) {
-  if (!process.env.SERPER_API_KEY) return null;
+  if (!process.env.TAVILY_API_KEY) return null;
 
   try {
-    const response = await fetch('https://google.serper.dev/search', {
+    const response = await fetch('https://api.tavily.com/search', {
       method: 'POST',
-      headers: {
-        'X-API-KEY': process.env.SERPER_API_KEY,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ q: query, gl: 'br', hl: 'pt-br', num: 5 })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: process.env.TAVILY_API_KEY,
+        query,
+        search_depth: 'basic', // 1 crédito por busca
+        max_results: 5,
+        include_answer: false,
+        include_raw_content: false
+      })
     });
 
     if (!response.ok) return null;
     const data = await response.json();
 
-    // Extrai os snippets mais relevantes dos resultados
-    const resultados = (data.organic || []).slice(0, 5).map(r => ({
+    return (data.results || []).slice(0, 5).map(r => ({
       titulo: r.title || '',
-      snippet: r.snippet || '',
-      fonte: r.displayLink || '',
-      link: r.link || ''
+      snippet: r.content || '',
+      fonte: r.url ? new URL(r.url).hostname : '',
+      link: r.url || ''
     }));
-
-    return resultados;
   } catch (err) {
-    log.warn('Serper falhou:', err.message);
+    log.warn('Tavily falhou:', err.message);
     return null;
   }
 }
