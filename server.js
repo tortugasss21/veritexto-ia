@@ -385,10 +385,11 @@ function extrairQueryPrincipal(texto) {
     return `${nomePessoa[0]} ${instituicaoMatch[0]}`;
   }
 
-  // Prioridade 2: duas instituições juntas (ex: "Nvidia Petrobras parceria")
+  // Prioridade 2: duas instituições DIFERENTES juntas (ex: "Nvidia Petrobras")
   const todasInstituicoes = [...t.matchAll(/\b(IBGE|IPEA|Inmet|TSE|STF|Banco Central|Copom|Anvisa|Petrobras|Nvidia|Fiocruz|OMS|CAGED|Embrapa|Google|Meta|TikTok|Apple|Microsoft|Amazon)\b/gi)];
-  if (todasInstituicoes.length >= 2) {
-    return `${todasInstituicoes[0][0]} ${todasInstituicoes[1][0]}`;
+  const instituicoesUnicas = [...new Set(todasInstituicoes.map(m => m[0].toLowerCase()))];
+  if (instituicoesUnicas.length >= 2) {
+    return `${instituicoesUnicas[0]} ${instituicoesUnicas[1]}`;
   }
 
   // Prioridade 3: instituição + dado numérico relevante (ex: "Selic 14,75%")
@@ -610,7 +611,7 @@ Texto para análise:
 
     const model = genAI.getGenerativeModel(
       {
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-2.0-flash',
         systemInstruction: systemPrompt,
         generationConfig: {
           responseMimeType: 'application/json',
@@ -852,7 +853,7 @@ Texto extraído:
 
     const model = genAI.getGenerativeModel(
       {
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-2.0-flash',
         systemInstruction: systemPrompt,
         generationConfig: {
           responseMimeType: 'application/json',
