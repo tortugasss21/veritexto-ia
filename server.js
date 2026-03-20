@@ -59,6 +59,7 @@ const analiseSchema = new mongoose.Schema({
   recomendacao: String,
   fontesSugeridas: [String],
   urlOrigem: String,
+  verificacaoWeb: String,
   dataAnalise: { type: Date, default: Date.now },
   feedback: {
     avaliacaoCorreta: Boolean,
@@ -501,12 +502,52 @@ RESPOSTA ESPERADA (JSON):
   "fontesSugeridas": ["Fonte 1 com URL se possível", "Fonte 2", ...]
 }`;
 
+    // ===================== ETAPA 1: PESQUISA WEB =====================
+    // Gemini com Google Search ativado — não aceita JSON mode, retorna texto livre
+    // Objetivo: verificar fatos reais antes de classificar
+    let contextoVerificacao = '';
+    try {
+      const modelPesquisa = genAI.getGenerativeModel(
+        {
+          model: 'gemini-2.5-flash-lite',
+          tools: [{ googleSearch: {} }],
+          generationConfig: { temperature: 0.1 },
+        },
+        { apiVersion: 'v1beta' }
+      );
+
+      const promptPesquisa = `Você é um verificador de fatos. Analise o texto abaixo e pesquise na web para verificar se as informações são verdadeiras.
+
+Para cada afirmação importante (números, recordes, cargos, eventos, datas), busque confirmação.
+
+Responda em português com:
+1. O que foi CONFIRMADO por fontes confiáveis (com as fontes encontradas)
+2. O que NÃO foi encontrado ou contradiz fontes confiáveis
+3. O que é IMPOSSÍVEL de verificar
+
+Texto: "${texto}"`;
+
+      const resultPesquisa = await modelPesquisa.generateContent(promptPesquisa);
+      contextoVerificacao = resultPesquisa.response.text();
+    } catch (errPesquisa) {
+      console.warn('Pesquisa web falhou, continuando sem ela:', errPesquisa.message);
+      contextoVerificacao = 'Pesquisa web indisponível nesta análise.';
+    }
+
+    // ===================== ETAPA 2: ANÁLISE ESTRUTURADA =====================
+    // Agora com JSON mode + o resultado da pesquisa como contexto adicional
     const userPrompt = `Analise o seguinte texto quanto a possíveis sinais de desinformação.
+
+RESULTADO DA PESQUISA WEB FEITA SOBRE ESTE TEXTO:
+---
+${contextoVerificacao}
+---
+
+Use esse resultado de pesquisa para calibrar o risco. Se a pesquisa confirmou os fatos, reduza o risco. Se contradiz ou não encontrou nada, aumente.
 
 Texto para análise:
 "${texto}"`;
 
-    // ✅ responseMimeType força JSON puro, sem texto extra
     const model = genAI.getGenerativeModel(
       {
         model: 'gemini-2.5-flash-lite',
@@ -516,20 +557,30 @@ Texto para análise:
           temperature: 0.2,
         },
       },
-      { apiVersion: 'v1beta' } // ✅ v1beta necessário para modelos gemini-2.5
+      { apiVersion: 'v1beta' }
     );
 
     const result = await model.generateContent(userPrompt);
 
     const respostaCompleta = result.response.text();
     const analiseBase = extrairResultadoDaResposta(respostaCompleta, texto);
+
+    // Injeta fontes encontradas na pesquisa no resultado final
+    if (contextoVerificacao && contextoVerificacao !== 'Pesquisa web indisponível nesta análise.') {
+      analiseBase._verificacaoWeb = contextoVerificacao.substring(0, 800);
+    }
+
     const analiseResultado = aplicarPenalizacoes(analiseBase, texto);
 
     // Salvar no MongoDB
-    const analise = new Analise(analiseResultado);
+    const analise = new Analise({
+      ...analiseResultado,
+      verificacaoWeb: analiseResultado._verificacaoWeb || null
+    });
     await analise.save();
 
-    res.json({ ...analiseResultado, _id: analise._id });
+    const { _verificacaoWeb, ...resultadoLimpo } = analiseResultado;
+    res.json({ ...resultadoLimpo, _id: analise._id, verificacaoWeb: analise.verificacaoWeb });
   } catch (error) {
     // Log detalhado para facilitar debug no Render
     console.error('Erro ao analisar texto:', error.message || error);
@@ -728,7 +779,50 @@ RESPOSTA ESPERADA (JSON):
   "fontesSugeridas": ["Fonte 1 com URL se possível", "Fonte 2", ...]
 }`;
 
-    const userPrompt = `Analise o seguinte conteúdo extraído de uma URL pública quanto a possíveis sinais de desinformação.\n\nCONTEXTO: O texto vem do domínio "${urlObj.hostname}". Considere isso ao avaliar a credibilidade da fonte.\n\nTexto extraído:\n"${texto}"`;
+    // ===================== ETAPA 1: PESQUISA WEB =====================
+    let contextoVerificacaoUrl = '';
+    try {
+      const modelPesquisa = genAI.getGenerativeModel(
+        {
+          model: 'gemini-2.5-flash-lite',
+          tools: [{ googleSearch: {} }],
+          generationConfig: { temperature: 0.1 },
+        },
+        { apiVersion: 'v1beta' }
+      );
+
+      const promptPesquisa = `Você é um verificador de fatos. O texto abaixo foi extraído do domínio "${urlObj.hostname}".
+
+Pesquise na web para verificar se as afirmações principais são verdadeiras.
+
+Responda em português com:
+1. O que foi CONFIRMADO por fontes confiáveis
+2. O que NÃO foi encontrado ou contradiz fontes confiáveis
+3. Avaliação do domínio de origem (é confiável? é conhecido?)
+
+Texto: "${texto.substring(0, 2000)}"`;
+
+      const resultPesquisa = await modelPesquisa.generateContent(promptPesquisa);
+      contextoVerificacaoUrl = resultPesquisa.response.text();
+    } catch (errPesquisa) {
+      console.warn('Pesquisa web (URL) falhou:', errPesquisa.message);
+      contextoVerificacaoUrl = 'Pesquisa web indisponível nesta análise.';
+    }
+
+    // ===================== ETAPA 2: ANÁLISE ESTRUTURADA =====================
+    const userPrompt = `Analise o seguinte conteúdo extraído de uma URL pública quanto a possíveis sinais de desinformação.
+
+CONTEXTO: O texto vem do domínio "${urlObj.hostname}".
+
+RESULTADO DA PESQUISA WEB FEITA SOBRE ESTE TEXTO:
+---
+${contextoVerificacaoUrl}
+---
+
+Use esse resultado para calibrar o risco. Se a pesquisa confirmou os fatos e o domínio é confiável, reduza o risco. Se contradiz ou não encontrou nada, aumente.
+
+Texto extraído:
+"${texto}"`;
 
     const model = genAI.getGenerativeModel(
       {
@@ -745,6 +839,11 @@ RESPOSTA ESPERADA (JSON):
     const result = await model.generateContent(userPrompt);
     const respostaCompleta = result.response.text();
     const analiseBase = extrairResultadoDaResposta(respostaCompleta, texto);
+
+    if (contextoVerificacaoUrl && contextoVerificacaoUrl !== 'Pesquisa web indisponível nesta análise.') {
+      analiseBase._verificacaoWeb = contextoVerificacaoUrl.substring(0, 800);
+    }
+
     const analiseResultado = aplicarPenalizacoes(analiseBase, texto, urlObj.hostname);
 
     // Salvar no MongoDB com a URL também
