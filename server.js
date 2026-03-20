@@ -71,7 +71,7 @@ const analiseSchema = new mongoose.Schema({
 const Analise = mongoose.model('Analise', analiseSchema);
 
 // ===================== GOOGLE GEMINI API =====================
-// ✅ CORRIGIDO: apiVersion 'v1beta' necessário para gemini-3.1-flash-lite no pacote 0.4.x
+// ✅ Modelo principal: gemini-2.0-flash | Fallback: gemini-1.5-flash
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // ===================== FUNÇÕES AUXILIARES =====================
@@ -609,17 +609,20 @@ INSTRUÇÕES PARA USO DOS RESULTADOS:
 Texto para análise:
 "${texto}"`;
 
-    const model = genAI.getGenerativeModel(
-      {
-        model: 'gemini-3.1-flash-lite',
+    let model;
+    try {
+      model = genAI.getGenerativeModel({
+        model: 'gemini-2.0-flash',
         systemInstruction: systemPrompt,
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.2,
-        },
-      },
-      { apiVersion: 'v1beta' }
-    );
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+      });
+    } catch {
+      model = genAI.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+        systemInstruction: systemPrompt,
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+      });
+    }
 
     const result = await model.generateContent(userPrompt);
 
@@ -851,17 +854,20 @@ Use esse resultado para calibrar o risco. Se a pesquisa confirmou os fatos e o d
 Texto extraído:
 "${texto}"`;
 
-    const model = genAI.getGenerativeModel(
-      {
-        model: 'gemini-3.1-flash-lite',
+    let model;
+    try {
+      model = genAI.getGenerativeModel({
+        model: 'gemini-2.0-flash',
         systemInstruction: systemPrompt,
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.2,
-        },
-      },
-      { apiVersion: 'v1beta' }
-    );
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+      });
+    } catch {
+      model = genAI.getGenerativeModel({
+        model: 'gemini-1.5-flash',
+        systemInstruction: systemPrompt,
+        generationConfig: { responseMimeType: 'application/json', temperature: 0.2 },
+      });
+    }
 
     const result = await model.generateContent(userPrompt);
     const respostaCompleta = result.response.text();
