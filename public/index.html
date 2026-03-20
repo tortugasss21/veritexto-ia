@@ -5,6 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VeriTexto - Detector de Desinformação</title>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <style>
+        [data-lucide] {
+            display: inline-block;
+            vertical-align: middle;
+            width: 15px;
+            height: 15px;
+            stroke: currentColor;
+            stroke-width: 2;
+            fill: none;
+            flex-shrink: 0;
+        }
+        .icon-lg[data-lucide] { width: 44px; height: 44px; }
+        .icon-sm[data-lucide] { width: 13px; height: 13px; }
+    </style>
     <style>
         * {
             margin: 0;
@@ -1397,11 +1412,13 @@
 
     <div id="loginOverlay">
         <div id="loginBox">
-            <div style="font-size:2.6em; margin-bottom:8px;">🔒</div>
+            <div style="margin-bottom:12px; color: #0066ff;">
+                <i data-lucide="shield-check" style="width:48px;height:48px;stroke:#0066ff;stroke-width:1.5;fill:none;display:inline-block;"></i>
+            </div>
             <h2 style="font-size:1.4em; color:#0066ff; margin-bottom:6px;">VeriTexto</h2>
             <p style="color:#666; font-size:0.9em; margin-bottom:24px;">Digite a senha para acessar</p>
             <input id="loginInput" type="password" placeholder="Senha de acesso">
-            <p id="loginErro">❌ Senha incorreta. Tente novamente.</p>
+            <p id="loginErro">Senha incorreta. Tente novamente.</p>
             <button id="loginBtn" onclick="tentarLogin()">Entrar</button>
         </div>
     </div>
@@ -1417,9 +1434,9 @@
         </div>
 
         <div class="tabs">
-            <button class="tab-button active" onclick="mudarAba('analise', this)"> Análise</button>
-            <button class="tab-button" id="tab-feedbacks-btn" onclick="verificarAutenticacaoFeedbacks(event)">  Acesso</button>
-            <button class="tab-button" onclick="mudarAba('estatisticas', this)"> Estatísticas</button>
+            <button class="tab-button active" onclick="mudarAba('analise', this)"><i data-lucide="search"></i> Análise</button>
+            <button class="tab-button" id="tab-feedbacks-btn" onclick="verificarAutenticacaoFeedbacks(event)"><i data-lucide="lock"></i> Acesso</button>
+            <button class="tab-button" onclick="mudarAba('estatisticas', this)"><i data-lucide="bar-chart-2"></i> Estatísticas</button>
         </div>
 
         <div id="analise" class="tab-content active">
@@ -1434,8 +1451,8 @@
                 <div class="form-group">
                     <!-- Toggle Texto / Site -->
                     <div class="input-toggle">
-                        <button class="toggle-btn active" id="toggleTexto" onclick="mudarModoInput('texto')">📝 Texto</button>
-                        <button class="toggle-btn" id="toggleSite" onclick="mudarModoInput('site')">🌐 Site (URL)</button>
+                        <button class="toggle-btn active" id="toggleTexto" onclick="mudarModoInput('texto')"><i data-lucide="file-text"></i> Texto</button>
+                        <button class="toggle-btn" id="toggleSite" onclick="mudarModoInput('site')"><i data-lucide="globe"></i> Site (URL)</button>
                     </div>
 
                     <!-- Input de texto -->
@@ -1450,7 +1467,7 @@
                         <label for="urlInput">Digite a URL da notícia ou site:</label>
                         <input type="url" class="url-input" id="urlInput" placeholder="https://exemplo.com/noticia" oninput="onUrlInput()" />
                         <div class="url-preview" id="urlPreview">
-                            🔍 Será analisado: <strong id="urlPreviewText"></strong>
+                            <i data-lucide="search" class="icon-sm"></i> Será analisado: <strong id="urlPreviewText"></strong>
                         </div>
                     </div>
                 </div>
@@ -1464,11 +1481,11 @@
                 </div>
 
                 <div class="examples-box" id="examplesBox">
-                    <div class="examples-title"> Exemplos para testar:</div>
+                    <div class="examples-title"><i data-lucide="flask-conical" class="icon-sm"></i> Exemplos para testar:</div>
                     <div class="examples-buttons">
-                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_alto')">Risco Alto </button>
-                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_medio')">Risco Médio </button>
-                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_baixo')">Risco Baixo </button>
+                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_alto')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-right:5px;vertical-align:middle;"></span>Risco Alto</button>
+                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_medio')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;margin-right:5px;vertical-align:middle;"></span>Risco Médio</button>
+                        <button class="btn-secondary" onclick="inserirExemplo('exemplo_baixo')"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;margin-right:5px;vertical-align:middle;"></span>Risco Baixo</button>
                     </div>
                 </div>
 
@@ -1551,15 +1568,15 @@
                         <div id="feedbackRow">
                             <div class="feedback-row">
                                 <span class="feedback-label">Análise correta?</span>
-                                <button class="btn-feedback btn-yes" id="btnSim" onclick="selecionarFeedback(true)">👍 Correta</button>
-                                <button class="btn-feedback btn-no" id="btnNao" onclick="selecionarFeedback(false)">👎 Errada</button>
+                                <button class="btn-feedback btn-yes" id="btnSim" onclick="selecionarFeedback(true)"><i data-lucide="thumbs-up"></i> Correta</button>
+                                <button class="btn-feedback btn-no" id="btnNao" onclick="selecionarFeedback(false)"><i data-lucide="thumbs-down"></i> Errada</button>
                                 <span class="feedback-msg" id="feedbackMsg"></span>
                             </div>
                             <textarea class="feedback-obs" id="feedbackObs" placeholder="Por quê? (opcional)"></textarea>
                             <button class="feedback-send" id="feedbackSend" onclick="enviarFeedback()">Enviar feedback</button>
                         </div>
                         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                            <button class="btn-share" id="btnCompartilhar" onclick="compartilharResultado()">↗ Compartilhar</button>
+                            <button class="btn-share" id="btnCompartilhar" onclick="compartilharResultado()"><i data-lucide="share-2"></i> Compartilhar</button>
                             <button class="btn-copy" id="btnCopiar" onclick="copiarResultado()">Copiar resultado</button>
                         </div>
                     </div>
@@ -1568,7 +1585,7 @@
                 <!-- Histórico local -->
                 <div class="history-section" id="historySection">
                     <div class="history-header" onclick="toggleHistorico()">
-                        <h4>🕓 Histórico recente</h4>
+                        <h4><i data-lucide="clock"></i> Histórico recente</h4>
                         <div style="display:flex; align-items:center; gap:12px;">
                             <button class="history-clear-btn" onclick="event.stopPropagation(); limparHistorico()">Limpar</button>
                             <span class="history-toggle-icon" id="historyToggleIcon">▼</span>
@@ -1582,8 +1599,8 @@
         <div id="feedbacks" class="tab-content">
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2>📊 Dashboard de Feedbacks (Privado)</h2>
-                    <button class="btn-secondary" onclick="logout()" style="padding: 8px 16px; font-size: 0.9em;">🚪 Sair</button>
+                    <h2><i data-lucide="layout-dashboard"></i> Dashboard de Feedbacks (Privado)</h2>
+                    <button class="btn-secondary" onclick="logout()" style="padding: 8px 16px; font-size: 0.9em;"><i data-lucide="log-out"></i> Sair</button>
                 </div>
                 
                 <div class="fb-stats-grid">
@@ -1614,9 +1631,9 @@
                 <h3 style="margin-bottom: 12px;">Lista de Feedbacks</h3>
                 <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;">
                     <button class="btn-secondary" onclick="setFbFiltro('todos')">Todos</button>
-                    <button class="btn-secondary" onclick="setFbFiltro('corretos')">✅ Corretos</button>
-                    <button class="btn-secondary" onclick="setFbFiltro('errados')">❌ Errados</button>
-                    <button class="fb-filter-toggle" id="fbFilterToggle" onclick="toggleFiltroData()">📅 Filtrar por data</button>
+                    <button class="btn-secondary" onclick="setFbFiltro('corretos')"><i data-lucide="check-circle"></i> Corretos</button>
+                    <button class="btn-secondary" onclick="setFbFiltro('errados')"><i data-lucide="x-circle"></i> Errados</button>
+                    <button class="fb-filter-toggle" id="fbFilterToggle" onclick="toggleFiltroData()"><i data-lucide="calendar"></i> Filtrar por data</button>
                 </div>
                 <div class="fb-filter-panel" id="fbFilterPanel">
                     <input type="date" class="fb-date-input" id="fbDateDe" title="A partir de">
@@ -1753,7 +1770,7 @@
             fetch(`${API_URL}/feedbacks/stats?senha=${encodeURIComponent(senha)}`)
                 .then(res => {
                     if (res.status === 401) {
-                        mostrarErroAuth('❌ Senha incorreta');
+                        mostrarErroAuth('Senha incorreta');
                         return null;
                     }
                     return res.json();
@@ -1796,7 +1813,10 @@
             const toggle = document.getElementById('fbFilterToggle');
             const open   = panel.classList.toggle('open');
             toggle.classList.toggle('active', open);
-            toggle.textContent = open ? '📅 Fechar filtro' : '📅 Filtrar por data';
+            toggle.innerHTML = open
+                ? '<i data-lucide="calendar"></i> Fechar filtro'
+                : '<i data-lucide="calendar"></i> Filtrar por data';
+            lucide.createIcons();
         }
 
         function limparFiltroData() {
@@ -1828,7 +1848,7 @@
                     <div class="fb-sugestao-card ${s.tipo === 'FALSO POSITIVO' ? 'fp' : 'fn'}">
                         <div class="fb-sugestao-tipo">${s.tipo || s.info}</div>
                         ${s.problema ? `<div class="fb-sugestao-problema">${s.problema}</div>` : ''}
-                        ${s.solucao  ? `<div class="fb-sugestao-solucao">💡 ${s.solucao}</div>` : ''}
+                        ${s.solucao  ? `<div class="fb-sugestao-solucao"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><circle cx="12" cy="12" r="3"/><path d="M12 2v2m0 16v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M2 12h2m16 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> ${s.solucao}</div>` : ''}
                         ${s.impacto  ? `<div class="fb-sugestao-impacto">${s.impacto}</div>` : ''}
                     </div>
                 `).join('');
@@ -1841,7 +1861,7 @@
 
                 if (patterns.riscosComMaiorErro && Object.keys(patterns.riscosComMaiorErro).length > 0) {
                     const erroItems = Object.entries(patterns.riscosComMaiorErro)
-                        .map(([risco, count]) => `<div class="fb-pattern-erro-item">🔴 <strong>${risco}:</strong> ${count} erros</div>`)
+                        .map(([risco, count]) => `<div class="fb-pattern-erro-item"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-right:6px;vertical-align:middle;"></span><strong>${risco}:</strong> ${count} erros</div>`)
                         .join('');
                     patHTML += `<div class="fb-pattern-block"><strong>Maior Quantidade de Erros Por Risco:</strong>${erroItems}</div>`;
                 }
@@ -1874,10 +1894,13 @@
 
                 const fbHTML = (fbData.feedbacks || []).map(fb => `
                     <div class="fb-item ${fb.avaliacaoCorreta ? 'correto' : 'errado'}">
-                        <div class="fb-item-header">${fb.avaliacaoCorreta ? '✅' : '❌'} "${fb.texto}"</div>
+                        <div class="fb-item-header">${fb.avaliacaoCorreta
+                            ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" style="vertical-align:middle;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>'
+                            : '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" style="vertical-align:middle;margin-right:4px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+                        } "${fb.texto}"</div>
                         <div class="fb-item-meta">Análise: <strong>${(fb.risco || '').toUpperCase()}</strong> (${fb.percentualRisco || 0}%) | ${(fb.sinais || []).length} sinais</div>
-                        ${fb.observacoes ? `<div class="fb-item-obs">📝 ${fb.observacoes}</div>` : ''}
-                        <div class="fb-item-date">📅 ${new Date(fb.dataFeedback).toLocaleDateString('pt-BR')}</div>
+                        ${fb.observacoes ? `<div class="fb-item-obs"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>${fb.observacoes}</div>` : ''}
+                        <div class="fb-item-date"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>${new Date(fb.dataFeedback).toLocaleDateString('pt-BR')}</div>
                     </div>
                 `).join('');
 
@@ -2445,18 +2468,18 @@
             const analise     = document.getElementById('explanation').textContent;
             const btn         = document.getElementById('btnCompartilhar');
 
-            const texto = `🔍 VeriTexto — Análise de Desinformação\n\n${titulo} (${percentual})\n${descricao}\n\n${analise}\n\nhttps://veritexto.com.br`;
+            const texto = `VeriTexto — Análise de Desinformação\n\n${titulo} (${percentual})\n${descricao}\n\n${analise}\n\nhttps://veritexto.com.br`;
 
             if (navigator.share) {
                 navigator.share({ title: 'VeriTexto', text: texto }).catch(() => {});
             } else {
                 navigator.clipboard.writeText(texto).then(() => {
-                    btn.textContent = '✓ Copiado!';
+                    btn.innerHTML = '<i data-lucide="check"></i> Copiado!';
                     btn.classList.add('shared');
-                    setTimeout(() => { btn.textContent = '↗ Compartilhar'; btn.classList.remove('shared'); }, 2000);
+                    setTimeout(() => { btn.innerHTML = '<i data-lucide="share-2"></i> Compartilhar'; btn.classList.remove('shared'); lucide.createIcons(); }, 2000);
                 }).catch(() => {
                     btn.textContent = 'Erro ao copiar';
-                    setTimeout(() => { btn.textContent = '↗ Compartilhar'; }, 2000);
+                    setTimeout(() => { btn.innerHTML = '<i data-lucide="share-2"></i> Compartilhar'; lucide.createIcons(); }, 2000);
                 });
             }
         }
@@ -2464,6 +2487,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             esconderExemplosSeJaUsou();
             renderizarHistorico();
+            lucide.createIcons();
 
             const textoEl = document.getElementById('texto');
 
