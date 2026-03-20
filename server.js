@@ -96,9 +96,197 @@ function normalizarConfiabilidade(v) {
   return 'media';
 }
 
-function normalizarResultado(resultado, textoOriginal = '') {
-  const risco = normalizarRisco(resultado?.risco);
+// ===================== DETECÇÃO DE ENTIDADES =====================
 
+// Domínios considerados fontes institucionais ou jornalísticas confiáveis
+const DOMINIOS_INSTITUCIONAIS = [
+  'gov.br', 'bcb.gov.br', 'ibge.gov.br', 'ipea.gov.br', 'inmet.gov.br',
+  'receita.fazenda.gov.br', 'tse.jus.br', 'stf.jus.br', 'senado.leg.br',
+  'camara.leg.br', 'fiocruz.br', 'embrapa.br', 'anvisa.gov.br',
+  'who.int', 'un.org', 'oecd.org'
+];
+
+const DOMINIOS_JORNALISTICOS = [
+  'agenciabrasil.ebc.com.br', 'g1.globo.com', 'folha.uol.com.br',
+  'estadao.com.br', 'valor.globo.com', 'uol.com.br', 'bbc.com',
+  'reuters.com', 'apnews.com', 'correiobraziliense.com.br'
+];
+
+function classificarFonte(texto) {
+  // Sem nenhum link
+  if (!/https?:\/\//i.test(texto) && !/www\./i.test(texto)) {
+    return { tipo: 'sem_link', peso: 0 };
+  }
+
+  const urlMatch = texto.match(/https?:\/\/([^\s/]+)/i);
+  const dominio = urlMatch ? urlMatch[1].toLowerCase() : '';
+
+  if (DOMINIOS_INSTITUCIONAIS.some(d => dominio.endsWith(d))) {
+    return { tipo: 'institucional', peso: 3, dominio };
+  }
+  if (DOMINIOS_JORNALISTICOS.some(d => dominio.endsWith(d))) {
+    return { tipo: 'jornalistico', peso: 2, dominio };
+  }
+  if (dominio.endsWith('.gov.br') || dominio.endsWith('.leg.br') || dominio.endsWith('.jus.br')) {
+    return { tipo: 'institucional', peso: 3, dominio };
+  }
+  if (dominio.endsWith('.org.br') || dominio.endsWith('.edu.br') || dominio.endsWith('.org')) {
+    return { tipo: 'organizacional', peso: 1, dominio };
+  }
+
+  // Link existe mas é genérico (bit.ly, t.co, link qualquer)
+  return { tipo: 'link_generico', peso: 0, dominio };
+}
+
+function detectarEntidades(texto) {
+  const t = texto.toLowerCase();
+
+  const instituicoesConhecidas = [
+    'inmet', 'ibge', 'ipea', 'banco central', 'copom', 'caged', 'pnad',
+    'oms', 'who', 'fgv', 'inss', 'receita federal', 'ministerio', 'governo federal',
+    'congresso', 'stf', 'senado', 'camara dos deputados', 'anatel', 'aneel',
+    'anvisa', 'sus', 'bndes', 'petrobras', 'embrapa', 'fiocruz', 'usp', 'unicamp',
+    'defesa civil', 'policia federal', 'tse', 'tcu', 'cvm'
+  ];
+
+  const instituicoes = instituicoesConhecidas.filter(inst => t.includes(inst))
+    .map(inst => inst.toUpperCase());
+
+  const recordes = /(recorde|recórd|menor.*(já|registrado|documentado)|maior.*(já|registrado|documentado)|primeira vez desde|histórico)/i.test(texto);
+
+  // Dados numéricos com contexto relevante (não só qualquer número)
+  const dadosNumericos = /\d+[,.]?\d*\s*(%|°c|reais|bilh|milh|\bvaga|\bponto|\bpp\b|pontos percentuais)/i.test(texto);
+
+  // ✅ FIX 2: Cargo com contexto mais robusto
+  // Detecta cargo + (nome próprio OU sigla de instituição próxima)
+  // Suporta: nomes acentuados, compostos, e textos em caixa baixa
+  const cargoComContexto = (() => {
+    const regexCargo = /(ministro|diretora?|economista.chefe|secretári[oa]|coordenador|pesquisador|climatologista|epidemiologista|professor|chefe do)(a)?\b/i;
+    if (!regexCargo.test(texto)) return false;
+
+    // Nome próprio: inicia com maiúscula OU tem partícula (de, da, dos) entre palavras
+    // Cobre: "Roberto Figueiredo", "Ana de Souza", "João Paulo Oliveira"
+    const temNomeProprio =
+      /\b[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][a-záéíóúàâêôãõç]+(?:\s+(?:de|da|do|dos|das|e)\s+)?[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][a-záéíóúàâêôãõç]+/.test(texto) ||
+      // Cobre texto em caixa baixa onde nome vem após cargo: "pesquisador carlos figueiredo"
+      /(ministro|diretor|pesquisador|professor|climatologista|secretário|coordenador)\s+[a-záéíóúàâêôãõç]+\s+[a-záéíóúàâêôãõç]+/i.test(texto);
+
+    const temInstituicaoProxima = instituicoes.length > 0;
+    return temNomeProprio || temInstituicaoProxima;
+  })();
+
+  const fonte = classificarFonte(texto);
+
+  // Afirmação forte: recorde + dado numérico específico juntos
+  const afirmacaoForte = recordes && dadosNumericos;
+
+  return { instituicoes, recordes, dadosNumericos, cargoComContexto, fonte, afirmacaoForte };
+}
+
+// ===================== SISTEMA DE PESO POR EVIDÊNCIA AUSENTE =====================
+// Em vez de só contar sinais, cada regra tem peso próprio baseado na gravidade
+const PESOS_PENALIZACAO = {
+  DADO_NUMERICO_SEM_FONTE:      { valor: 20, descricao: 'Dados estatísticos específicos com instituições reais mas sem publicação ou link verificável' },
+  RECORDE_SEM_PUBLICACAO:       { valor: 18, descricao: 'Afirmação de recorde histórico sem referência à publicação primária verificável' },
+  CARGO_COM_NOME_SEM_FONTE:     { valor: 12, descricao: 'Especialista identificado por nome e cargo sem link para declaração ou nota técnica original' },
+  MULTIPLAS_INST_AFIRMACAO_FORTE: { valor: 12, descricao: 'Múltiplas instituições + alegação forte em texto curto — padrão frequente em desinformação sofisticada' },
+  LINK_GENERICO:                { valor: 8,  descricao: 'Texto contém link, mas aponta para domínio não identificado como fonte primária ou jornalística confiável' },
+};
+
+// Limiares unificados para todo o sistema
+const LIMIAR_MEDIO = 30;
+const LIMIAR_ALTO  = 60;
+
+function calcularRiscoPorPercentual(percentual) {
+  if (percentual >= LIMIAR_ALTO)  return 'alto';
+  if (percentual >= LIMIAR_MEDIO) return 'medio';
+  return 'baixo';
+}
+
+// ===================== PENALIZAÇÃO PÓS-ANÁLISE =====================
+function aplicarPenalizacoes(resultado, texto, dominioOrigem = null) {
+  const entidades = detectarEntidades(texto);
+  let { risco, percentualRisco, sinais, confiabilidade, explicacao } = resultado;
+  const sinaisSet = new Set(sinais);
+  let penalidade = 0;
+
+  const dominioConfiavel = dominioOrigem &&
+    (DOMINIOS_INSTITUCIONAIS.some(d => dominioOrigem.endsWith(d)) ||
+     DOMINIOS_JORNALISTICOS.some(d => dominioOrigem.endsWith(d)));
+  const fatorReducao = dominioConfiavel ? 0.4 : 1.0;
+
+  const temFonteForte = entidades.fonte.tipo === 'institucional' || entidades.fonte.tipo === 'jornalistico';
+  const linkGenerico  = entidades.fonte.tipo === 'link_generico';
+
+  // Regra 1: Dado numérico + instituição real + sem fonte forte
+  if (entidades.dadosNumericos && entidades.instituicoes.length > 0 && !temFonteForte) {
+    const p = PESOS_PENALIZACAO.DADO_NUMERICO_SEM_FONTE;
+    sinaisSet.add(p.descricao);
+    penalidade += Math.round(p.valor * fatorReducao);
+  }
+
+  // Regra 2: Recorde histórico sem publicação primária
+  if (entidades.recordes && !temFonteForte) {
+    const p = PESOS_PENALIZACAO.RECORDE_SEM_PUBLICACAO;
+    sinaisSet.add(p.descricao);
+    penalidade += Math.round(p.valor * fatorReducao);
+  }
+
+  // Regra 3: Cargo técnico + nome próprio + sem fonte + dado numérico
+  if (entidades.cargoComContexto && entidades.dadosNumericos && !temFonteForte) {
+    const p = PESOS_PENALIZACAO.CARGO_COM_NOME_SEM_FONTE;
+    sinaisSet.add(p.descricao);
+    penalidade += Math.round(p.valor * fatorReducao);
+  }
+
+  // Regra 4: Múltiplas instituições em texto curto + afirmação forte
+  if (entidades.instituicoes.length >= 2 && texto.length < 600 && entidades.afirmacaoForte) {
+    const p = PESOS_PENALIZACAO.MULTIPLAS_INST_AFIRMACAO_FORTE;
+    sinaisSet.add(`${p.descricao} (${entidades.instituicoes.slice(0, 3).join(', ')})`);
+    penalidade += Math.round(p.valor * fatorReducao);
+  }
+
+  // Regra 5: Link genérico com dados numéricos
+  if (linkGenerico && entidades.dadosNumericos) {
+    const p = PESOS_PENALIZACAO.LINK_GENERICO;
+    sinaisSet.add(`${p.descricao} (${entidades.fonte.dominio})`);
+    penalidade += Math.round(p.valor * fatorReducao);
+  }
+
+  // ✅ FIX 3: Teto de penalização — evita que 3 regras juntas joguem tudo direto pra alto
+  // Máximo de +40 pontos independente de quantas regras dispararam
+  const penal = Math.min(penalidade, 40);
+
+  const novosSinais = [...sinaisSet];
+
+  if (penal > 0) {
+    percentualRisco = Math.min(100, percentualRisco + penal);
+    risco = calcularRiscoPorPercentual(percentualRisco);
+
+    if (confiabilidade === 'alta') confiabilidade = 'media';
+
+    if (!explicacao.includes('não foram verificados')) {
+      explicacao += ' ⚠️ Nota: este sistema não possui acesso a fontes externas em tempo real — os dados citados não foram verificados contra publicações oficiais.';
+    }
+  }
+
+  return {
+    ...resultado,
+    risco,
+    percentualRisco,
+    sinais: novosSinais,
+    confiabilidade,
+    explicacao,
+    _meta: {
+      penalidade: penal,
+      penal_bruta: penalidade,
+      dominioConfiavel: dominioConfiavel || false,
+      tipoFonte: entidades.fonte.tipo
+    }
+  };
+}
+
+function normalizarResultado(resultado, textoOriginal = '') {
   const sinaisArray = Array.isArray(resultado?.sinais) ? resultado.sinais : [];
   const fatoresArray = Array.isArray(resultado?.fatores) ? resultado.fatores : [];
 
@@ -108,13 +296,18 @@ function normalizarResultado(resultado, textoOriginal = '') {
   let percentualRisco = Number(resultado?.percentualRisco);
 
   if (Number.isNaN(percentualRisco) || !Number.isFinite(percentualRisco)) {
-    const percentualPorSinais = sinaisCount * 15;
-    const percentualPorFatores = Math.min(fatoresCount, 3) * 8;
-    percentualRisco = Math.min(100, percentualPorSinais + percentualPorFatores);
+    if (sinaisCount === 0) {
+      percentualRisco = 15;
+    } else {
+      const percentualPorSinais = sinaisCount * 20;
+      const percentualPorFatores = Math.min(fatoresCount, 3) * 8;
+      percentualRisco = Math.min(100, percentualPorSinais + percentualPorFatores);
+    }
   }
 
   percentualRisco = Math.max(0, Math.min(100, Math.round(percentualRisco)));
 
+  const risco = calcularRiscoPorPercentual(percentualRisco);
   const confiabilidade = normalizarConfiabilidade(resultado?.confiabilidade);
   const tipo = resultado?.tipo ? String(resultado.tipo).trim() : null;
 
@@ -139,15 +332,47 @@ function normalizarResultado(resultado, textoOriginal = '') {
   return { texto: textoOriginal, risco, percentualRisco, confiabilidade, tipo, fatores, sinais, fontesSugeridas, explicacao, recomendacao };
 }
 
+// ✅ FIX 4: Fallback inteligente — quando a IA falha, o sistema analisa o texto por conta própria
+// em vez de retornar um resultado genérico inútil
 function criarResultadoFallback(textoOriginal = '') {
+  const entidades = detectarEntidades(textoOriginal);
+  const t = textoOriginal.toLowerCase();
+
+  // Análise mínima própria do sistema
+  const sinaisFallback = [];
+  let percentualFallback = 35; // ponto de partida conservador
+
+  if (entidades.dadosNumericos && entidades.instituicoes.length > 0) {
+    sinaisFallback.push('Dados estatísticos com instituições reais sem fonte verificável');
+    percentualFallback += 15;
+  }
+  if (entidades.recordes) {
+    sinaisFallback.push('Afirmação de recorde histórico sem publicação primária');
+    percentualFallback += 10;
+  }
+  if (/urgente|compartilhe|antes que apaguem|não vão mostrar/i.test(t)) {
+    sinaisFallback.push('Linguagem de urgência artificial detectada');
+    percentualFallback += 20;
+  }
+  if (entidades.cargoComContexto) {
+    sinaisFallback.push('Especialista com cargo técnico citado sem fonte verificável');
+    percentualFallback += 10;
+  }
+
+  percentualFallback = Math.min(100, percentualFallback);
+  sinaisFallback.push('Análise automática parcial — a IA não retornou resposta válida');
+
   return {
     texto: textoOriginal,
-    risco: 'medio', percentualRisco: 50,
-    confiabilidade: 'baixa', tipo: null,
-    fatores: [], sinais: ['A resposta da IA não veio em formato ideal'],
+    risco: calcularRiscoPorPercentual(percentualFallback),
+    percentualRisco: percentualFallback,
+    confiabilidade: 'baixa',
+    tipo: null,
+    fatores: [],
+    sinais: sinaisFallback,
     fontesSugeridas: [],
-    explicacao: 'O sistema não conseguiu interpretar a resposta da IA.',
-    recomendacao: 'Tente novamente e verifique a informação em fontes confiáveis.'
+    explicacao: 'A IA não retornou uma análise válida. O sistema aplicou verificação automática básica com base nos padrões identificados no texto.',
+    recomendacao: 'Tente novamente. Se o problema persistir, verifique a informação diretamente em fontes como Agência Brasil, G1 ou portais oficiais (.gov.br).'
   };
 }
 
@@ -297,7 +522,8 @@ Texto para análise:
     const result = await model.generateContent(userPrompt);
 
     const respostaCompleta = result.response.text();
-    const analiseResultado = extrairResultadoDaResposta(respostaCompleta, texto);
+    const analiseBase = extrairResultadoDaResposta(respostaCompleta, texto);
+    const analiseResultado = aplicarPenalizacoes(analiseBase, texto);
 
     // Salvar no MongoDB
     const analise = new Analise(analiseResultado);
@@ -453,6 +679,21 @@ SINAIS SUTIS (desinformação sofisticada):
 11. Dados que contradizem tendências conhecidas sem explicação
 
 ════════════════════════════════════════
+VERIFICAÇÃO DE FATOS — SIMULE UMA BUSCA
+════════════════════════════════════════
+Para cada dado específico no texto (número, recorde, cargo, evento), pergunte a si mesmo:
+"Consigo confirmar isso com base no meu conhecimento até minha data de corte?"
+
+- Se SIM e os dados batem → reduza o risco desse elemento
+- Se NÃO ou se há incerteza → adicione nos sinais e mencione na explicação o que NÃO foi possível verificar
+- Se o dado contradiz algo que você sabe → aumente o risco e explique a contradição
+
+Exemplos do que mencionar na explicacao:
+→ "Não foi possível confirmar se [nome] ocupa o cargo de [cargo] em [instituição]"
+→ "O recorde mencionado não corresponde a dados conhecidos da instituição citada"
+→ "A taxa/número é plausível mas não pôde ser vinculada a uma divulgação específica"
+
+════════════════════════════════════════
 TIPOS DE DESINFORMAÇÃO:
 ════════════════════════════════════════
 - "boato": Boato viral sem base em fatos verificáveis
@@ -503,7 +744,8 @@ RESPOSTA ESPERADA (JSON):
 
     const result = await model.generateContent(userPrompt);
     const respostaCompleta = result.response.text();
-    const analiseResultado = extrairResultadoDaResposta(respostaCompleta, texto);
+    const analiseBase = extrairResultadoDaResposta(respostaCompleta, texto);
+    const analiseResultado = aplicarPenalizacoes(analiseBase, texto, urlObj.hostname);
 
     // Salvar no MongoDB com a URL também
     const analise = new Analise({ ...analiseResultado, urlOrigem: url.trim() });
