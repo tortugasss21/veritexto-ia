@@ -71,7 +71,7 @@ const analiseSchema = new mongoose.Schema({
 const Analise = mongoose.model('Analise', analiseSchema);
 
 // ===================== GOOGLE GEMINI API =====================
-// ✅ CORRIGIDO: apiVersion 'v1beta' necessário para gemini-2.0-flash no pacote 0.4.x
+// ✅ CORRIGIDO: apiVersion 'v1beta' necessário para gemini-1.5-flash no pacote 0.4.x
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // ===================== FUNÇÕES AUXILIARES =====================
@@ -611,7 +611,7 @@ Texto para análise:
 
     const model = genAI.getGenerativeModel(
       {
-        model: 'gemini-2.0-flash',
+        model: 'gemini-1.5-flash',
         systemInstruction: systemPrompt,
         generationConfig: {
           responseMimeType: 'application/json',
@@ -853,7 +853,7 @@ Texto extraído:
 
     const model = genAI.getGenerativeModel(
       {
-        model: 'gemini-2.0-flash',
+        model: 'gemini-1.5-flash',
         systemInstruction: systemPrompt,
         generationConfig: {
           responseMimeType: 'application/json',
