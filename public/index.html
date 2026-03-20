@@ -2414,6 +2414,91 @@
                 toggleDarkMode();
             }
         });
+
+        // ===================== LOGIN =====================
+        const SENHA_CORRETA = 'veriTexto2026';
+        const STORAGE_KEY   = 'vt_auth';
+
+        function verificarLogin() {
+            return sessionStorage.getItem(STORAGE_KEY) === '1';
+        }
+
+        function mostrarLogin() {
+            document.getElementById('loginOverlay').style.display = 'flex';
+            document.querySelector('.container').style.display = 'none';
+            setTimeout(() => document.getElementById('loginInput').focus(), 100);
+        }
+
+        function tentarLogin() {
+            const senha = document.getElementById('loginInput').value;
+            const erro  = document.getElementById('loginErro');
+
+            if (senha === SENHA_CORRETA) {
+                sessionStorage.setItem(STORAGE_KEY, '1');
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.querySelector('.container').style.display = 'flex';
+                document.getElementById('loginInput').value = '';
+                erro.style.display = 'none';
+            } else {
+                erro.style.display = 'block';
+                document.getElementById('loginInput').value = '';
+                document.getElementById('loginInput').focus();
+                // Shake animation
+                const box = document.getElementById('loginBox');
+                box.classList.add('shake');
+                setTimeout(() => box.classList.remove('shake'), 500);
+            }
+        }
+
+        document.getElementById('loginInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') tentarLogin();
+        });
+
+        // Checa ao carregar
+        if (!verificarLogin()) mostrarLogin();
     </script>
+
+    <!-- LOGIN OVERLAY -->
+    <div id="loginOverlay" style="display:none; position:fixed; inset:0; z-index:9999;
+        background: linear-gradient(135deg, #f8fafc 0%, #eef4ff 100%);
+        align-items:center; justify-content:center;">
+        <div id="loginBox" style="background:#fff; border-radius:16px; padding:40px 36px;
+            box-shadow:0 8px 40px rgba(0,102,255,0.13); max-width:360px; width:90%; text-align:center;">
+
+            <div style="font-size:2.6em; margin-bottom:8px;">🔒</div>
+            <h2 style="font-size:1.4em; color:#0066ff; margin-bottom:6px;">VeriTexto</h2>
+            <p style="color:#666; font-size:0.9em; margin-bottom:24px;">Digite a senha para acessar</p>
+
+            <input id="loginInput" type="password" placeholder="Senha de acesso"
+                style="width:100%; padding:12px 16px; border:2px solid #e2e8f0; border-radius:10px;
+                font-size:1em; outline:none; transition:border 0.2s; margin-bottom:12px;"
+                onfocus="this.style.borderColor='#0066ff'"
+                onblur="this.style.borderColor='#e2e8f0'">
+
+            <p id="loginErro" style="display:none; color:#ef4444; font-size:0.85em; margin-bottom:12px;">
+                ❌ Senha incorreta. Tente novamente.
+            </p>
+
+            <button onclick="tentarLogin()"
+                style="width:100%; padding:12px; background:#0066ff; color:#fff; border:none;
+                border-radius:10px; font-size:1em; font-weight:600; cursor:pointer;
+                transition:background 0.2s;"
+                onmouseover="this.style.background='#0052cc'"
+                onmouseout="this.style.background='#0066ff'">
+                Entrar
+            </button>
+        </div>
+    </div>
+
+    <style>
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%       { transform: translateX(-8px); }
+            40%       { transform: translateX(8px); }
+            60%       { transform: translateX(-6px); }
+            80%       { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.5s ease; }
+    </style>
 </body>
 </html>
