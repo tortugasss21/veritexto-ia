@@ -333,7 +333,7 @@ function calcularRiscoPorPercentual(percentual) {
 }
 
 // ===================== PENALIZAÇÃO PÓS-ANÁLISE =====================
-function aplicarPenalizacoes(resultado, texto, dominioOrigem = null) {
+function aplicarPenalizacoes(resultado, texto, dominioOrigem = null, serperStatus = 'indisponivel') {
   const entidades = detectarEntidades(texto);
   let { risco, percentualRisco, sinais, confiabilidade, explicacao } = resultado;
   const sinaisSet = new Set(sinais);
@@ -394,8 +394,15 @@ function aplicarPenalizacoes(resultado, texto, dominioOrigem = null) {
 
     if (confiabilidade === 'alta') confiabilidade = 'media';
 
-    if (!explicacao.includes('não foram verificados')) {
-      explicacao += ' ⚠️ Nota: este sistema não possui acesso a fontes externas em tempo real — os dados citados não foram verificados contra publicações oficiais.';
+    const jaTemNota = explicacao.includes('verificação externa') || explicacao.includes('não foram verificados');
+    if (!jaTemNota) {
+      if (serperStatus === 'ok') {
+        explicacao += ' ⚠️ Nota: a verificação externa foi realizada, mas não encontrou fontes que confirmem suficientemente as afirmações específicas do texto.';
+      } else if (serperStatus === 'sem_resultados') {
+        explicacao += ' ⚠️ Nota: a busca externa não retornou resultados relevantes para confirmar as afirmações do texto.';
+      } else {
+        explicacao += ' ⚠️ Nota: a verificação externa ficou indisponível nesta análise — os dados citados não foram checados contra publicações oficiais.';
+      }
     }
   }
 
@@ -410,7 +417,8 @@ function aplicarPenalizacoes(resultado, texto, dominioOrigem = null) {
       penalidade: penal,
       penal_bruta: penalidade,
       dominioConfiavel: dominioConfiavel || false,
-      tipoFonte: entidades.fonte.tipo
+      tipoFonte: entidades.fonte.tipo,
+      buscaStatus: serperStatus
     }
   };
 }
@@ -495,41 +503,83 @@ async function pesquisarNoGoogle(query) {
   }
 }
 
-// Extrai a query mais relevante do texto (apenas 1 busca por análise)
-function extrairQueryPrincipal(texto) {
+// Gera até 3 queries distintas para aumentar a chance de achar resultados úteis
+function extrairQueriesPrincipais(texto) {
   const t = texto.trim();
+  const queries = [];
 
-  // Palavras que NÃO são nomes de pessoas (cidades, meses, etc.)
   const naoSaoPessoas = /^(São Paulo|Rio de Janeiro|Brasília|Belo Horizonte|Janeiro|Fevereiro|Março|Abril|Maio|Junho|Julho|Agosto|Setembro|Outubro|Novembro|Dezembro|Brasil|Estados Unidos|América|Europa)$/i;
 
   const instituicaoMatch = t.match(/\b(IBGE|IPEA|Inmet|TSE|STF|Banco Central|Copom|Anvisa|Petrobras|Nvidia|Fiocruz|OMS|CAGED|Embrapa|Selic|Receita Federal|Google|Meta|TikTok|Apple|Microsoft|Amazon)\b/i);
 
-  // Pega TODOS os nomes próprios e filtra os que não são pessoas
   const todoNomesProprios = [...t.matchAll(/\b[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][a-záéíóúàâêôãõç]+ [A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][a-záéíóúàâêôãõç]+\b/g)];
   const nomePessoa = todoNomesProprios.find(m => !naoSaoPessoas.test(m[0]));
 
-  // Prioridade 1: pessoa real + instituição (ex: "Jensen Huang Nvidia")
-  if (nomePessoa && instituicaoMatch) {
-    return `${nomePessoa[0]} ${instituicaoMatch[0]}`;
-  }
-
-  // Prioridade 2: duas instituições DIFERENTES juntas (ex: "Nvidia Petrobras")
   const todasInstituicoes = [...t.matchAll(/\b(IBGE|IPEA|Inmet|TSE|STF|Banco Central|Copom|Anvisa|Petrobras|Nvidia|Fiocruz|OMS|CAGED|Embrapa|Google|Meta|TikTok|Apple|Microsoft|Amazon)\b/gi)];
-  const instituicoesUnicas = [...new Set(todasInstituicoes.map(m => m[0].toLowerCase()))];
+  const instituicoesUnicas = [...new Set(todasInstituicoes.map(m => m[0]))];
+
+  const numerico = t.match(/\d+[,.]?\d*\s*(%|°C|bilh|milh|reais|USD|R\$)/i);
+
+  // Query 1 — pessoa + instituição (mais específica)
+  if (nomePessoa && instituicaoMatch) {
+    queries.push(`${nomePessoa[0]} ${instituicaoMatch[0]}`);
+  }
+
+  // Query 2 — instituição + dado numérico (ex: "Selic 14,75%")
+  if (instituicaoMatch && numerico) {
+    const q = `${instituicaoMatch[0]} ${numerico[0]}`;
+    if (!queries.includes(q)) queries.push(q);
+  }
+
+  // Query 3 — duas instituições juntas (ex: "IBGE IPEA")
   if (instituicoesUnicas.length >= 2) {
-    return `${instituicoesUnicas[0]} ${instituicoesUnicas[1]}`;
+    const q = `${instituicoesUnicas[0]} ${instituicoesUnicas[1]}`;
+    if (!queries.includes(q)) queries.push(q);
   }
 
-  // Prioridade 3: instituição + dado numérico relevante (ex: "Selic 14,75%")
-  if (instituicaoMatch) {
-    const numerico = t.match(/\d+[,.]?\d*\s*(%|°C|bilh|milh|reais|USD|R\$)/i);
-    if (numerico) return `${instituicaoMatch[0]} ${numerico[0]}`;
-    return instituicaoMatch[0];
+  // Query 4 — só a instituição principal (fallback)
+  if (instituicaoMatch && queries.length < 2) {
+    if (!queries.includes(instituicaoMatch[0])) queries.push(instituicaoMatch[0]);
   }
 
-  // Fallback: primeira frase sem data/local no início
-  const semDataLocal = t.replace(/^[A-Za-záéíóúàâêôãõç\s,]+,\s*\d{1,2}\s+de\s+\w+\s+de\s+\d{4}\s*[—–-]\s*/i, '');
-  return semDataLocal.split(/[.!?]/)[0].substring(0, 100).trim();
+  // Fallback final — primeira frase relevante
+  if (queries.length === 0) {
+    const semDataLocal = t.replace(/^[A-Za-záéíóúàâêôãõç\s,]+,\s*\d{1,2}\s+de\s+\w+\s+de\s+\d{4}\s*[—–-]\s*/i, '');
+    queries.push(semDataLocal.split(/[.!?]/)[0].substring(0, 100).trim());
+  }
+
+  return queries.slice(0, 3); // máximo 3 buscas por análise
+}
+
+// Mantém compatibilidade com código que usa a função de query única
+function extrairQueryPrincipal(texto) {
+  return extrairQueriesPrincipais(texto)[0];
+}
+
+// Busca com múltiplas queries — para na primeira que trouxer resultados bons
+async function pesquisarComMultiplasQueries(texto) {
+  const queries = extrairQueriesPrincipais(texto);
+  let melhorResultado = null;
+  let queryUsada = null;
+
+  for (const query of queries) {
+    const resultados = await pesquisarNoGoogle(query);
+    if (resultados && resultados.length > 0) {
+      // Prefere o resultado com mais snippets não-vazios
+      const temConteudo = resultados.filter(r => r.snippet && r.snippet.length > 30);
+      if (!melhorResultado || temConteudo.length > melhorResultado.snippets) {
+        melhorResultado = { resultados, snippets: temConteudo.length };
+        queryUsada = query;
+      }
+      if (temConteudo.length >= 3) break; // resultado bom o suficiente, para
+    }
+  }
+
+  if (!melhorResultado) {
+    return { resultados: null, query: queries[0], status: queries[0] ? 'sem_resultados' : 'indisponivel' };
+  }
+
+  return { resultados: melhorResultado.resultados, query: queryUsada, status: 'ok' };
 }
 
 function formatarResultadosBusca(resultados, query) {
@@ -629,20 +679,19 @@ app.post('/api/analisar', rateLimit, async (req, res) => {
     const dataHoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const systemPrompt = obterSystemPrompt(dataHoje);
 
-    // ── Serper ──
+    // ── Serper (múltiplas queries) ──
     let contextoVerificacao = 'Pesquisa web indisponível nesta análise.';
     let serperStatus = 'indisponivel';
     let serperQuery = null;
     try {
-      serperQuery = extrairQueryPrincipal(texto);
-      const resultados = await pesquisarNoGoogle(serperQuery);
-      if (resultados && resultados.length > 0) {
-        contextoVerificacao = formatarResultadosBusca(resultados, serperQuery);
-        serperStatus = 'ok';
-        log.info(`Serper OK — query: "${serperQuery}"`);
+      const busca = await pesquisarComMultiplasQueries(texto);
+      serperQuery = busca.query;
+      serperStatus = busca.status;
+      if (busca.status === 'ok' && busca.resultados) {
+        contextoVerificacao = formatarResultadosBusca(busca.resultados, busca.query);
+        log.info(`Serper OK — query: "${busca.query}" | ${busca.resultados.length} resultados`);
       } else {
-        serperStatus = 'sem_resultados';
-        log.warn(`Serper sem resultados para: "${serperQuery}"`);
+        log.warn(`Serper: ${busca.status} para query: "${busca.query}"`);
       }
     } catch (errPesquisa) {
       log.warn('Serper falhou, continuando sem ela:', errPesquisa.message);
@@ -678,7 +727,7 @@ Texto para análise:
       analiseBase._verificacaoWeb = contextoVerificacao.substring(0, 800);
     }
 
-    const analiseResultado = aplicarPenalizacoes(analiseBase, texto);
+    const analiseResultado = aplicarPenalizacoes(analiseBase, texto, null, serperStatus);
 
     const analise = new Analise({
       ...analiseResultado,
@@ -797,20 +846,19 @@ app.post('/api/analisar-url', rateLimit, async (req, res) => {
     const dataHoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const systemPrompt = obterSystemPrompt(dataHoje);
 
-    // ── Serper ──
+    // ── Serper (múltiplas queries) ──
     let contextoVerificacaoUrl = 'Pesquisa web indisponível nesta análise.';
     let serperStatusUrl = 'indisponivel';
     let serperQueryUrl = null;
     try {
-      serperQueryUrl = extrairQueryPrincipal(texto);
-      const resultados = await pesquisarNoGoogle(serperQueryUrl);
-      if (resultados && resultados.length > 0) {
-        contextoVerificacaoUrl = formatarResultadosBusca(resultados, serperQueryUrl);
-        serperStatusUrl = 'ok';
-        log.info(`Serper URL OK — query: "${serperQueryUrl}" — domínio: ${urlObj.hostname}`);
+      const buscaUrl = await pesquisarComMultiplasQueries(texto);
+      serperQueryUrl = buscaUrl.query;
+      serperStatusUrl = buscaUrl.status;
+      if (buscaUrl.status === 'ok' && buscaUrl.resultados) {
+        contextoVerificacaoUrl = formatarResultadosBusca(buscaUrl.resultados, buscaUrl.query);
+        log.info(`Serper URL OK — query: "${buscaUrl.query}" — domínio: ${urlObj.hostname}`);
       } else {
-        serperStatusUrl = 'sem_resultados';
-        log.warn(`Serper URL sem resultados para: "${serperQueryUrl}"`);
+        log.warn(`Serper URL: ${buscaUrl.status} para query: "${buscaUrl.query}"`);
       }
     } catch (errPesquisa) {
       log.warn('Serper (URL) falhou:', errPesquisa.message);
@@ -844,7 +892,7 @@ Texto extraído:
       analiseBase._verificacaoWeb = contextoVerificacaoUrl.substring(0, 800);
     }
 
-    const analiseResultado = aplicarPenalizacoes(analiseBase, texto, urlObj.hostname);
+    const analiseResultado = aplicarPenalizacoes(analiseBase, texto, urlObj.hostname, serperStatusUrl);
 
     const analise = new Analise({ ...analiseResultado, urlOrigem: url.trim() });
     await analise.save();
