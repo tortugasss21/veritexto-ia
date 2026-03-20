@@ -371,15 +371,36 @@ async function pesquisarNoGoogle(query) {
 function extrairQueryPrincipal(texto) {
   const t = texto.trim();
 
-  // Prioridade 1: nome próprio + instituição (mais específico e verificável)
-  const nomeProprio = t.match(/\b[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][a-záéíóúàâêôãõç]+ [A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][a-záéíóúàâêôãõç]+\b/);
-  const instituicaoMatch = t.match(/\b(IBGE|IPEA|Inmet|TSE|STF|Banco Central|Copom|Anvisa|Petrobras|Nvidia|Fiocruz|OMS|CAGED|Embrapa|Selic|Receita Federal)\b/i);
-  if (nomeProprio && instituicaoMatch) {
-    return `${nomeProprio[0]} ${instituicaoMatch[0]}`;
+  // Palavras que NÃO são nomes de pessoas (cidades, meses, etc.)
+  const naoSaoPessoas = /^(São Paulo|Rio de Janeiro|Brasília|Belo Horizonte|Janeiro|Fevereiro|Março|Abril|Maio|Junho|Julho|Agosto|Setembro|Outubro|Novembro|Dezembro|Brasil|Estados Unidos|América|Europa)$/i;
+
+  const instituicaoMatch = t.match(/\b(IBGE|IPEA|Inmet|TSE|STF|Banco Central|Copom|Anvisa|Petrobras|Nvidia|Fiocruz|OMS|CAGED|Embrapa|Selic|Receita Federal|Google|Meta|TikTok|Apple|Microsoft|Amazon)\b/i);
+
+  // Pega TODOS os nomes próprios e filtra os que não são pessoas
+  const todoNomesProprios = [...t.matchAll(/\b[A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][a-záéíóúàâêôãõç]+ [A-ZÁÉÍÓÚÀÂÊÔÃÕÇ][a-záéíóúàâêôãõç]+\b/g)];
+  const nomePessoa = todoNomesProprios.find(m => !naoSaoPessoas.test(m[0]));
+
+  // Prioridade 1: pessoa real + instituição (ex: "Jensen Huang Nvidia")
+  if (nomePessoa && instituicaoMatch) {
+    return `${nomePessoa[0]} ${instituicaoMatch[0]}`;
   }
 
-  // Prioridade 2: evento/fato principal (primeira frase até 100 chars)
-  return t.split(/[.!?]/)[0].substring(0, 100).trim();
+  // Prioridade 2: duas instituições juntas (ex: "Nvidia Petrobras parceria")
+  const todasInstituicoes = [...t.matchAll(/\b(IBGE|IPEA|Inmet|TSE|STF|Banco Central|Copom|Anvisa|Petrobras|Nvidia|Fiocruz|OMS|CAGED|Embrapa|Google|Meta|TikTok|Apple|Microsoft|Amazon)\b/gi)];
+  if (todasInstituicoes.length >= 2) {
+    return `${todasInstituicoes[0][0]} ${todasInstituicoes[1][0]}`;
+  }
+
+  // Prioridade 3: instituição + dado numérico relevante (ex: "Selic 14,75%")
+  if (instituicaoMatch) {
+    const numerico = t.match(/\d+[,.]?\d*\s*(%|°C|bilh|milh|reais|USD|R\$)/i);
+    if (numerico) return `${instituicaoMatch[0]} ${numerico[0]}`;
+    return instituicaoMatch[0];
+  }
+
+  // Fallback: primeira frase sem data/local no início
+  const semDataLocal = t.replace(/^[A-Za-záéíóúàâêôãõç\s,]+,\s*\d{1,2}\s+de\s+\w+\s+de\s+\d{4}\s*[—–-]\s*/i, '');
+  return semDataLocal.split(/[.!?]/)[0].substring(0, 100).trim();
 }
 
 function formatarResultadosBusca(resultados, query) {
